@@ -2,7 +2,6 @@
 \usepackage[margin=2.2cm]{geometry}
 \usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage{hyperref}
 \usepackage{amsmath}
 \usepackage{xcolor}
 \usepackage{enumitem}
@@ -11,12 +10,74 @@
 \setlength{\parskip}{0.4em}
 \setlength{\parindent}{0em}
 
-\title{Stem Agent: Self-Specializing AI Agents\\Through Guided Evolutionary Configuration Search}
-\author{[Your Name]}
-\date{\today}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{enumitem}
+\usepackage[colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black]{hyperref}
+\usepackage{float}
+\usepackage{array,booktabs}
+\usepackage[most]{tcolorbox}
+\usepackage{amssymb}
+\usepackage[numbers]{natbib}
 
+% =============== BOX GRIGIO ===================
+\tcbset{
+  tabbox/.style={
+    enhanced,
+    colback=black!7,   % grigio chiaro
+    colframe=black!7,  % stesso colore per nascondere il bordo
+    boxrule=0pt,
+    arc=3mm,           % angoli arrotondati
+    left=8mm,right=8mm,top=6mm,bottom=6mm
+  }
+}
+
+\definecolor{rosepurple}{RGB}{255,90,255}
+\definecolor{orange}{RGB}{255,50,50}
+\definecolor{blue}{RGB}{90, 90, 255}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\footnotesize\ttfamily,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{style=mystyle}
 \begin{document}
-\maketitle
+\begin{titlepage}
+    \centering
+    \vspace*{4cm}
+
+    \includegraphics[width=1\textwidth]{jetbrains-logo.png}\par
+    \vspace{2cm}
+
+    {\Huge \bfseries Stem Agent: Self-Specializing AI Agent Through Guided Evolutionary Configuration Search\par}
+    \vspace{1cm}
+    {\Large Andrea Gennari\par}
+
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+
 
 % =============================================================
 % DAY 1: Write Section 1 + Section 2 draft
@@ -24,27 +85,73 @@
 
 \section{Introduction and Approach}
 
-% The analogy (2 paragraphs max)
-% Why code bug repair as domain (3 sentences)
-% Architecture overview (reference Figure if you have one)
-% Key design decision: evolutionary config search + vital signs invariant
-% Positioning vs DSPy, OPRO, Promptbreeder, ADAS
-% "Our contribution is the combination of (a) multi-axis mutation, 
-%  (b) vital signs safety invariant, (c) rigorous real-bug evaluation"
+A stem cell begins life in a generic, pluripotent state and differentiates into a specialist by reading environmental signals.
+We apply the same principle to AI agents.
+A \emph{Stem Agent} starts with a minimal, generic configuration for a target problem class and iteratively specializes itself: it mutates its own configuration, measures the effect on a held-out performance signal, and accepts or rejects the change subject to a safety invariant that prevents catastrophic regression.
+The result is an agent that earned its specialization through evidence, not intuition.
 
-\textbf{[TODO Day 1]}: Write framing, domain choice justification, 
-architecture overview. \\
+We choose \textbf{Python bug repair} as the target domain for three concrete reasons.
+First, evaluation is perfectly objective --- a test suite either passes or it does not, with no scoring rubric or human judgment required.
+Second, the domain is directly relevant to JetBrains, whose core business is developer productivity tooling.
+Third, bug repair has structured failure modes --- off-by-one boundary shifts, inverted conditions, wrong variable references, missing guard clauses --- that reward specialization in a measurable and reproducible way.
+
+The architecture consists of four sequential phases.
+\textbf{Phase~0 (Baseline)} establishes a performance floor by running a vanilla agent on all 90 tasks and using its per-task pass/fail results to assign four frozen evaluation splits.
+\textbf{Phase~1 (Sensing)} analyzes failures on a calibration split using an LLM to extract structured failure patterns and to suggest specialization directions; this produces a static \texttt{SensorReport}.
+\textbf{Phase~2 (Differentiation)} runs an evolutionary mutation-selection loop: each iteration generates a \emph{challenger} configuration by applying one or two mutation operators to the current \emph{champion}, evaluates it on the dev set, checks it against a vital signs safeguard, and promotes it if it clears both thresholds.
+\textbf{Phase~3 (Final Evaluation)} scores the final champion --- and all ablation variants --- on the held-out test set that was never touched during search.
+
+The inner agent's ``genome'' is an \texttt{AgentConfig} dataclass that covers four mutation axes: (a)~\emph{prompt} (system message, few-shot examples, chain-of-thought instruction, output format); (b)~\emph{tools} (subset of 7 available tools, tool-use strategy); (c)~\emph{strategy} (\texttt{direct}, \texttt{cot}, \texttt{react}, \texttt{plan\_execute}); and (d)~\emph{inference parameters} (temperature, model).
+Twelve explicit mutation operators act on these axes (Section~\ref{sec:differentiation}).
+
+The key design decision is the \textbf{vital signs invariant}.
+After Phase~0, a small set of tasks that the vanilla baseline solves are designated \emph{vital signs}.
+Any challenger configuration that fails on any vital-sign task is rejected regardless of its dev-set score.
+This prevents catastrophic specialization --- the agent becoming very good at hard cases while regressing on easy ones.
+No existing prompt-optimization or agent-search framework (DSPy, OPRO, Promptbreeder, ADAS) provides an analogous formal regression-safety mechanism.
+
 \textbf{[TODO Day 2]}: Add related work positioning.
 
 \section{Benchmark and Experimental Setup}
 
 \subsection{Benchmark}
 
-% N tasks, sources (BugsInPy / mutation / synthetic)
-% Category distribution table
-% Validation procedure
+The benchmark comprises \textbf{90 self-contained Python bug-repair tasks}.
+Each task is a directory containing: \texttt{buggy.py} (the file with the injected bug), \texttt{fixed.py} (the ground-truth reference fix, never shown to agents), \texttt{test\_suite.py} (a \texttt{pytest} suite that fails on the buggy file and passes on the fixed file), and \texttt{metadata.json} (category, difficulty, source, description).
 
-\textbf{[TODO Day 1]}: Write benchmark description after construction.
+\textbf{Source.}
+We initially attempted to extract tasks from BugsInPy~\cite{widyasari2020}, a dataset of real bugs from popular Python projects.
+Repository-level dependencies and complex test environments made self-contained extraction infeasible within the time budget.
+We therefore constructed all 90 tasks via \emph{mutation testing} on Exercism Python exercises: correct reference solutions were taken and a single-point bug was injected using known mutation operators (off-by-one boundary shift, wrong relational operator, inverted boolean condition, wrong variable reference, missing guard clause, wrong API argument, boundary index error).
+All tasks carry \texttt{"source": "mutation\_exercism"} in their metadata.
+
+\textbf{Category distribution.}
+Tasks span 7 bug categories (Table~\ref{tab:benchmark}).
+Difficulty is labeled \texttt{easy} (single-token or single-operator change; 66 tasks) or \texttt{medium} (multi-line or structural change; 24 tasks).
+
+\begin{table}[h]
+\centering
+\caption{Benchmark category distribution (90 tasks).}
+\label{tab:benchmark}
+\begin{tabular}{lcc}
+\toprule
+Category & Count & \% \\
+\midrule
+\texttt{logic\_error}    & 18 & 20.0 \\
+\texttt{off\_by\_one}    & 15 & 16.7 \\
+\texttt{missing\_check}  & 15 & 16.7 \\
+\texttt{wrong\_variable} & 12 & 13.3 \\
+\texttt{api\_misuse}     & 10 & 11.1 \\
+\texttt{type\_error}     & 10 & 11.1 \\
+\texttt{boundary}        & 10 & 11.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Validation.}
+Every task was validated automatically: \texttt{buggy.py} was run as the candidate solution and \emph{must fail} at least one test; \texttt{fixed.py} was run as the candidate solution and \emph{must pass} all tests.
+Tasks that did not satisfy this invariant --- bugs too subtle for the provided tests to catch --- were redesigned with targeted test cases that expose the fault.
+All 90 tasks passed validation before being included.
 
 \subsection{Splits and Evaluation Protocol}
 
