@@ -1,8 +1,0 @@
-{
-  "task_id": "task_018",
-  "source": "mutation_exercism",
-  "category": "wrong_variable",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "max_profit tracks max_price instead of min_price, never updates the buy signal correctly"
-}

@@ -1,8 +1,0 @@
-{
-  "task_id": "task_073",
-  "source": "mutation_exercism",
-  "category": "api_misuse",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "zip_unequal drops elements from longer list by using zip instead of zip_longest"
-}

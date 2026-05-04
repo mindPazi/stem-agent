@@ -1,8 +1,0 @@
-{
-  "task_id": "task_019",
-  "source": "mutation_exercism",
-  "category": "wrong_variable",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "string_compression appends char before count, producing reversed encoding"
-}

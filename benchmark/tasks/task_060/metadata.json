@@ -1,8 +1,0 @@
-{
-  "task_id": "task_060",
-  "source": "mutation_exercism",
-  "category": "logic_error",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "product_of_list uses sum() instead of computing the product"
-}

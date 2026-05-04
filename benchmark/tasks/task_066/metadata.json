@@ -1,8 +1,0 @@
-{
-  "task_id": "task_066",
-  "source": "mutation_exercism",
-  "category": "type_error",
-  "difficulty": "medium",
-  "lines_changed": 1,
-  "description": "list_to_string uses str(list) instead of joining the list elements"
-}

@@ -1,8 +1,0 @@
-{
-  "task_id": "task_077",
-  "source": "mutation_exercism",
-  "category": "api_misuse",
-  "difficulty": "medium",
-  "lines_changed": 1,
-  "description": "map_applied discards map object, not converting to list"
-}

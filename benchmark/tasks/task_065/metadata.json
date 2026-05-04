@@ -1,8 +1,0 @@
-{
-  "task_id": "task_065",
-  "source": "mutation_exercism",
-  "category": "type_error",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "number_to_string uses int() instead of str() when converting number"
-}

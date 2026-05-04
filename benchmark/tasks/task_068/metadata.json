@@ -1,8 +1,0 @@
-{
-  "task_id": "task_068",
-  "source": "mutation_exercism",
-  "category": "type_error",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "set_difference uses list comprehension with wrong operator instead of set subtraction"
-}

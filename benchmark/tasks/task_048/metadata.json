@@ -1,8 +1,0 @@
-{
-  "task_id": "task_048",
-  "source": "mutation_exercism",
-  "category": "logic_error",
-  "difficulty": "medium",
-  "lines_changed": 1,
-  "description": "is_palindrome doesn't lowercase before comparing, failing on mixed-case palindromes"
-}

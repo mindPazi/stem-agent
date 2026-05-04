@@ -1,8 +1,0 @@
-{
-  "task_id": "task_035",
-  "source": "mutation_exercism",
-  "category": "missing_check",
-  "difficulty": "easy",
-  "lines_changed": 3,
-  "description": "first_element raises IndexError on empty list instead of returning None"
-}

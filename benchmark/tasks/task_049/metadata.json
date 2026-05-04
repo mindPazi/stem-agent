@@ -1,8 +1,0 @@
-{
-  "task_id": "task_049",
-  "source": "mutation_exercism",
-  "category": "logic_error",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "find_max initializes max_val to 0, failing for all-negative arrays"
-}

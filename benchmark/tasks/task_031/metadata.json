@@ -1,8 +1,0 @@
-{
-  "task_id": "task_031",
-  "source": "mutation_exercism",
-  "category": "missing_check",
-  "difficulty": "easy",
-  "lines_changed": 3,
-  "description": "stack_peek raises IndexError on empty stack instead of returning None"
-}

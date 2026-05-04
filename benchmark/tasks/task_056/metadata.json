@@ -1,8 +1,0 @@
-{
-  "task_id": "task_056",
-  "source": "mutation_exercism",
-  "category": "logic_error",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "sort_by_length sorts by negative length, giving descending order instead of ascending"
-}

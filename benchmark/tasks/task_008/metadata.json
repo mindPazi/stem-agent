@@ -1,8 +1,0 @@
-{
-  "task_id": "task_008",
-  "source": "mutation_exercism",
-  "category": "off_by_one",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "count_pairs_with_sum checks arr[i]+arr[j] == target*2 instead of target"
-}

@@ -1,8 +1,0 @@
-{
-  "task_id": "task_042",
-  "source": "mutation_exercism",
-  "category": "missing_check",
-  "difficulty": "easy",
-  "lines_changed": 2,
-  "description": "parse_int wraps result in abs(), turning negative numbers positive"
-}

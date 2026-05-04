@@ -1,8 +1,0 @@
-{
-  "task_id": "task_024",
-  "source": "mutation_exercism",
-  "category": "wrong_variable",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "capitalize_words calls lower() instead of capitalize() on each word"
-}

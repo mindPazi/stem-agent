@@ -1,8 +1,0 @@
-{
-  "task_id": "task_032",
-  "source": "mutation_exercism",
-  "category": "missing_check",
-  "difficulty": "easy",
-  "lines_changed": 2,
-  "description": "is_prime returns True for n=1, which is not a prime number"
-}

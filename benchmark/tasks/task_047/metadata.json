@@ -1,8 +1,0 @@
-{
-  "task_id": "task_047",
-  "source": "mutation_exercism",
-  "category": "logic_error",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "sum_of_squares sums then squares instead of squaring each element then summing"
-}

@@ -1,8 +1,0 @@
-{
-  "task_id": "task_083",
-  "source": "mutation_exercism",
-  "category": "boundary",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "fibonacci_zero returns 1 for n=0 instead of 0"
-}

@@ -1,8 +1,0 @@
-{
-  "task_id": "task_005",
-  "source": "mutation_exercism",
-  "category": "off_by_one",
-  "difficulty": "easy",
-  "lines_changed": 1,
-  "description": "remove_duplicates appends when arr[i] == arr[i+1] (inverted condition)"
-}
