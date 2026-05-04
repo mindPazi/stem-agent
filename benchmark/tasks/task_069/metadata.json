@@ -1,0 +1,8 @@
+{
+  "task_id": "task_069",
+  "source": "mutation_exercism",
+  "category": "type_error",
+  "difficulty": "medium",
+  "lines_changed": 1,
+  "description": "dict_values_sum sums dictionary keys instead of values"
+}

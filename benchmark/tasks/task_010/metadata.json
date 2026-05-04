@@ -1,0 +1,8 @@
+{
+  "task_id": "task_010",
+  "source": "mutation_exercism",
+  "category": "off_by_one",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "caesar_cipher shifts by n-1 instead of n due to subtraction in modulo"
+}

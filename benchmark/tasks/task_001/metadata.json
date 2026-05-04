@@ -1,0 +1,8 @@
+{
+  "task_id": "task_001",
+  "source": "mutation_exercism",
+  "category": "off_by_one",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "binary_search uses high=len(arr) causing IndexError when target exceeds all elements"
+}

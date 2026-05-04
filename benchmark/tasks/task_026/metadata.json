@@ -1,0 +1,8 @@
+{
+  "task_id": "task_026",
+  "source": "mutation_exercism",
+  "category": "wrong_variable",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "count_vowels checks character against consonants set instead of vowels set"
+}

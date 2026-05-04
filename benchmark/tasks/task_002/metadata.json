@@ -1,0 +1,8 @@
+{
+  "task_id": "task_002",
+  "source": "mutation_exercism",
+  "category": "off_by_one",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "Fibonacci returns fib(n-1) instead of fib(n) due to off-by-one in loop range"
+}

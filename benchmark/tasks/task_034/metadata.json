@@ -1,0 +1,8 @@
+{
+  "task_id": "task_034",
+  "source": "mutation_exercism",
+  "category": "missing_check",
+  "difficulty": "medium",
+  "lines_changed": 3,
+  "description": "count_digits returns 0 for n=0 instead of 1"
+}

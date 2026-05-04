@@ -1,0 +1,8 @@
+{
+  "task_id": "task_090",
+  "source": "mutation_exercism",
+  "category": "boundary",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "string_title uses wrong method: upper() instead of title() capitalizing everything"
+}

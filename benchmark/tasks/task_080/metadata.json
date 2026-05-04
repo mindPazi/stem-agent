@@ -1,0 +1,8 @@
+{
+  "task_id": "task_080",
+  "source": "mutation_exercism",
+  "category": "api_misuse",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "filter_kept keeps matching elements correctly but returns filter object, not list"
+}

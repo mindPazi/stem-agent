@@ -1,0 +1,8 @@
+{
+  "task_id": "task_028",
+  "source": "mutation_exercism",
+  "category": "missing_check",
+  "difficulty": "easy",
+  "lines_changed": 2,
+  "description": "safe_divide raises ZeroDivisionError because it doesn't check for zero denominator"
+}

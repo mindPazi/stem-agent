@@ -1,0 +1,8 @@
+{
+  "task_id": "task_079",
+  "source": "mutation_exercism",
+  "category": "api_misuse",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "max_with_wrong_key finds max by string length instead of numeric value"
+}

@@ -1,0 +1,8 @@
+{
+  "task_id": "task_064",
+  "source": "mutation_exercism",
+  "category": "type_error",
+  "difficulty": "easy",
+  "lines_changed": 2,
+  "description": "sum_with_initial passes wrong type to sum(): sum(list, list) instead of sum(list, int)"
+}

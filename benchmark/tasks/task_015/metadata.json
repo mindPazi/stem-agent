@@ -1,0 +1,8 @@
+{
+  "task_id": "task_015",
+  "source": "mutation_exercism",
+  "category": "off_by_one",
+  "difficulty": "medium",
+  "lines_changed": 1,
+  "description": "trap_rain_water uses max(left_max, right_max) instead of min, computing wrong water level"
+}

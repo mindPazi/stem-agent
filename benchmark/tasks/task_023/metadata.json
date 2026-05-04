@@ -1,0 +1,8 @@
+{
+  "task_id": "task_023",
+  "source": "mutation_exercism",
+  "category": "wrong_variable",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "transpose_matrix swaps matrix[i][j] with matrix[i][j] (no-op) instead of matrix[j][i]"
+}

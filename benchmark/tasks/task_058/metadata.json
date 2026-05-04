@@ -1,0 +1,8 @@
+{
+  "task_id": "task_058",
+  "source": "mutation_exercism",
+  "category": "logic_error",
+  "difficulty": "medium",
+  "lines_changed": 1,
+  "description": "flatten uses += [sublist] creating nested results instead of result.extend()"
+}

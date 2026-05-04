@@ -1,0 +1,8 @@
+{
+  "task_id": "task_036",
+  "source": "mutation_exercism",
+  "category": "missing_check",
+  "difficulty": "medium",
+  "lines_changed": 3,
+  "description": "max_in_matrix crashes on empty matrix instead of returning None"
+}

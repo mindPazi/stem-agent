@@ -1,0 +1,8 @@
+{
+  "task_id": "task_062",
+  "source": "mutation_exercism",
+  "category": "type_error",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "integer_average uses integer division (//) instead of float division, truncating result"
+}

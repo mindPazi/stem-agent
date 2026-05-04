@@ -1,0 +1,8 @@
+{
+  "task_id": "task_038",
+  "source": "mutation_exercism",
+  "category": "missing_check",
+  "difficulty": "easy",
+  "lines_changed": 2,
+  "description": "safe_log raises ValueError on non-positive input instead of returning None"
+}

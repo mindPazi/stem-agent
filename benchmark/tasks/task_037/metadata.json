@@ -1,0 +1,8 @@
+{
+  "task_id": "task_037",
+  "source": "mutation_exercism",
+  "category": "missing_check",
+  "difficulty": "easy",
+  "lines_changed": 2,
+  "description": "remove_item raises ValueError when item not in list instead of returning list unchanged"
+}

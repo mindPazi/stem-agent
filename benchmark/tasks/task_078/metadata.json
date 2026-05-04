@@ -1,0 +1,8 @@
+{
+  "task_id": "task_078",
+  "source": "mutation_exercism",
+  "category": "api_misuse",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "enumerate_wrong_start starts enumeration at 0 instead of 1 for 1-indexed positions"
+}

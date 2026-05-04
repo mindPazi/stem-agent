@@ -1,0 +1,8 @@
+{
+  "task_id": "task_053",
+  "source": "mutation_exercism",
+  "category": "logic_error",
+  "difficulty": "easy",
+  "lines_changed": 1,
+  "description": "frequency_count uses != instead of == when counting target, counting everything else"
+}
