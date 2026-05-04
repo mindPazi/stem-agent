@@ -1,0 +1,193 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage[font=small]{caption}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0em}
+
+\title{Stem Agent: Self-Specializing AI Agents\\Through Guided Evolutionary Configuration Search}
+\author{[Your Name]}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+% =============================================================
+% DAY 1: Write Section 1 + Section 2 draft
+% =============================================================
+
+\section{Introduction and Approach}
+
+% The analogy (2 paragraphs max)
+% Why code bug repair as domain (3 sentences)
+% Architecture overview (reference Figure if you have one)
+% Key design decision: evolutionary config search + vital signs invariant
+% Positioning vs DSPy, OPRO, Promptbreeder, ADAS
+% "Our contribution is the combination of (a) multi-axis mutation, 
+%  (b) vital signs safety invariant, (c) rigorous real-bug evaluation"
+
+\textbf{[TODO Day 1]}: Write framing, domain choice justification, 
+architecture overview. \\
+\textbf{[TODO Day 2]}: Add related work positioning.
+
+\section{Benchmark and Experimental Setup}
+
+\subsection{Benchmark}
+
+% N tasks, sources (BugsInPy / mutation / synthetic)
+% Category distribution table
+% Validation procedure
+
+\textbf{[TODO Day 1]}: Write benchmark description after construction.
+
+\subsection{Splits and Evaluation Protocol}
+
+% 4 splits: calibration, dev, vital signs, test
+% Sizes, stratification, freeze policy
+% Metrics: pass@1, bootstrap CI, McNemar
+% Baselines: vanilla_direct, vanilla_cot, generic_react, hand_tuned, random_search
+
+\textbf{[TODO Day 2]}: Complete after Phase 0 with actual split sizes.
+
+% =============================================================
+% DAY 2: Write Sections 3 + 4.1
+% =============================================================
+
+\section{The Stem Agent}
+
+\subsection{Phase 0: Baseline Establishment}
+
+% Baseline results table
+% Split assignment procedure
+
+\textbf{[TODO Day 2]}: Fill with Phase 0 results.
+
+\subsection{Phase 1: Sensing}
+
+% What the Sensor analyzes
+% Key failure patterns discovered
+% Suggested mutations generated
+
+\textbf{[TODO Day 2]}: Fill with Sensor report summary.
+
+\subsection{Phase 2: Differentiation}
+
+% Mutation operators (enumerate key ones)
+% Selection mechanism (champion/challenger)
+% Safeguard mechanism (vital signs invariant)
+% Convergence criterion
+
+\textbf{[TODO Day 2]}: Write mechanism description. \\
+\textbf{[TODO Day 3]}: Add differentiation trajectory results.
+
+% =============================================================
+% DAY 3: Write Section 4 (Results)
+% =============================================================
+
+\section{Results}
+
+\subsection{Main Results}
+
+% Main comparison table: all agents x pass@1 x CI x cost x p-value
+% Interpretation
+
+\textbf{[TODO Day 3]}: Fill with test set results.
+
+\begin{table}[h]
+\centering
+\caption{Test set results (pass@1)}
+\begin{tabular}{lcccc}
+\toprule
+Agent & pass@1 & 95\% CI & Cost/task & $p$ (vs vanilla) \\
+\midrule
+\texttt{vanilla\_direct} & -- & -- & -- & -- \\
+\texttt{vanilla\_cot} & -- & -- & -- & -- \\
+\texttt{generic\_react} & -- & -- & -- & -- \\
+\texttt{hand\_tuned} & -- & -- & -- & -- \\
+\texttt{random\_search} & -- & -- & -- & -- \\
+\texttt{stem\_agent} & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ablation Study}
+
+% Ablation table
+% Interpretation of each ablation
+
+\textbf{[TODO Day 3]}: Fill with ablation results.
+
+\subsection{Cross-Domain Validation}
+
+% HumanEval results: stem_agent vs vanilla
+% Interpretation
+
+\textbf{[TODO Day 3]}: Fill with cross-domain results.
+
+% =============================================================
+% DAY 4: Write Sections 5 + 6 + 7
+% =============================================================
+
+\section{Analysis and Discussion}
+
+\subsection{What Worked}
+
+% Most effective mutations
+% Categories that improved most
+% Role of the Sensor
+
+\textbf{[TODO Day 4]}
+
+\subsection{What Didn't Work}
+
+% Ineffective mutations
+% Resistant bug categories
+% Search space limitations
+
+\textbf{[TODO Day 4]}
+
+\subsection{The Safeguard in Practice}
+
+% Trigger count
+% What it prevented
+% Ablation evidence (no_safeguard variant)
+
+\textbf{[TODO Day 4]}
+
+\subsection{Surprises}
+
+% Unexpected findings
+
+\textbf{[TODO Day 4]}
+
+\section{Limitations and Future Work}
+
+% Be honest:
+% - Small benchmark (N=X)
+% - Model mismatch (mini for search, 4o for eval)
+% - Hand-designed mutation operators
+% - Single domain evaluation
+% - Cost of differentiation
+% Future:
+% - Learned mutations
+% - Multi-objective (perf + cost)
+% - Transfer between stem agents
+% - Larger benchmarks (full SWE-bench)
+
+\textbf{[TODO Day 4]}
+
+\section*{References}
+% Khattab et al. 2023 (DSPy)
+% Yang et al. 2023 (OPRO) 
+% Fernando et al. 2023 (Promptbreeder)
+% Hu et al. 2024 (ADAS)
+% Jimenez et al. 2024 (SWE-bench)
+% Widyasari et al. 2020 (BugsInPy)
+
+\end{document}
