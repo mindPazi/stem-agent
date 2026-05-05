@@ -165,7 +165,7 @@ Category & Count & \% \\
 
 \textbf{Validation.}
 Every task was validated automatically: \texttt{buggy.py} was run as the candidate solution and \emph{must fail} at least one test; \texttt{fixed.py} was run as the candidate solution and \emph{must pass} all tests.
-Tasks that did not satisfy this invariant, because the bugs were too subtle for the provided tests to catch, were redesigned with targeted test cases that expose the fault.
+Tasks that did not satisfy this invariant because the bugs were too subtle for the provided tests to catch were redesigned with targeted test cases that expose the fault; this is a correctness criterion independent of the leakage issue described below.
 All 90 tasks passed validation before being included.
 
 \textbf{Test-source leakage and prompt design.}
@@ -184,7 +184,8 @@ We address this in two ways. First, 12 tasks (\texttt{task\_004}, \texttt{task\_
 \texttt{task\_021}, \texttt{task\_027}, \texttt{task\_042}, \texttt{task\_055},
 \texttt{task\_057}, \texttt{task\_058}) where the original tests most directly
 revealed the fix were rewritten with hardcoded behavioral assertions and minimal
-spoilers; the remaining 78 retain behavioral or property-based assertions from
+spoilers (a separate concern from the correctness-driven redesigns in the
+Validation step above); the remaining 78 retain behavioral or property-based assertions from
 the initial generation, several of which still embed reference implementations
 in helper functions. The full rewrite of the 12 tasks is reproducible via
 \texttt{benchmark/fix\_tasks.py}.
