@@ -70,12 +70,15 @@ class BugFixAgent:
             "diff": "Return a unified diff patch of the fix.",
             "function_only": "Return only the fixed function(s), not the entire file.",
         }.get(self.config.output_format, "Return the complete fixed Python file.")
+        # NOTE: We deliberately do NOT include task.test_suite_code in the prompt.
+        # Many test files contain _ref() reference implementations that would
+        # leak the correct algorithm. The agent must rely on the buggy code
+        # itself, the function name, and (in react mode) the get_traceback /
+        # run_tests tools, which is closer to a realistic bug-fixing scenario.
         prompt = (
-            "Fix the Python implementation so that it satisfies the provided test suite.\n\n"
+            "Fix the Python implementation so that all hidden tests pass.\n\n"
             f"Buggy code:\n```python\n{task.buggy_code}\n```"
         )
-        if task.test_suite_code:
-            prompt += f"\n\nTest suite:\n```python\n{task.test_suite_code}\n```"
         return f"{prompt}\n\n{fmt_hint}"
 
     def _base_messages(self, task: Task) -> list[dict]:

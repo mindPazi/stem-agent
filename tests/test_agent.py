@@ -142,6 +142,42 @@ def test_task_description_is_not_sent_to_model(task: Task):
 
     messages = client.chat.call_args[0][0]
     user_prompt = messages[-1]["content"]
+
+    # The bug-revealing description must never be sent to the model.
     assert task.description not in user_prompt
     assert "Bug description" not in user_prompt
-    assert task.test_suite_code in user_prompt
+
+    # Test source code must NOT be sent either: many test files contain
+    # _ref() reference implementations that would leak the fix.
+    assert task.test_suite_code not in user_prompt
+    assert "_ref" not in user_prompt
+    assert "Test suite:" not in user_prompt
+
+
+def test_test_suite_code_never_in_prompt():
+    """Regression guard: prompt construction must never embed test source."""
+    client = MagicMock()
+    client.chat.return_value = _make_resp("```python\nx=1\n```")
+
+    leaky_test_code = (
+        "from solution import f\n"
+        "def _ref(x):\n"
+        "    return x + 42  # SECRET_REFERENCE_IMPL\n"
+        "def test_f():\n"
+        "    assert f(1) == _ref(1)\n"
+    )
+    t = Task(
+        task_id="t",
+        task_dir="/tmp/t",
+        buggy_code="def f(x): return x",
+        description="",
+        test_suite_code=leaky_test_code,
+    )
+    cfg = AgentConfig(approach="direct")
+    agent = BugFixAgent(cfg, client)
+    agent.fix(t)
+
+    user_prompt = client.chat.call_args[0][0][-1]["content"]
+    assert "SECRET_REFERENCE_IMPL" not in user_prompt
+    assert "_ref" not in user_prompt
+    assert leaky_test_code not in user_prompt

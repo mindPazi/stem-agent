@@ -168,19 +168,53 @@ Every task was validated automatically: \texttt{buggy.py} was run as the candida
 Tasks that did not satisfy this invariant, because the bugs were too subtle for the provided tests to catch, were redesigned with targeted test cases that expose the fault.
 All 90 tasks passed validation before being included.
 
-\textbf{Behavioral test design.}
-Manual inspection of 10 randomly sampled tasks revealed that, in the original test suites, ultra-specific assertions of the form \texttt{assert f(x) == hardcoded\_value} produced tracebacks that effectively spelled out the fix: the failing input, the wrong return value, and the expected return value, combined with the short \texttt{buggy.py}, made the bug location obvious to any competent LLM with near-zero reasoning required.
-This is the textbook ``synthetic data too easy'' failure mode and it directly compresses the dynamic range of any agent comparison: most configurations pass these tasks regardless of specialization.
+\textbf{Test-source leakage and prompt design.}
+A manual inspection of 10 randomly sampled tasks during construction revealed a
+test-leakage failure mode: in the originally generated test suites, ultra-specific
+assertions of the form \texttt{assert f(x) == hardcoded\_value} produced
+tracebacks that effectively spelled out the correct return value, and several
+tests defined a local \texttt{\_ref} function that re-implemented the intended
+algorithm. Both patterns directly compress the dynamic range of any agent
+comparison, since a competent LLM can solve the task by pattern-matching the
+test source rather than by reasoning about the buggy code. This is the textbook
+``synthetic data too easy'' failure mode.
 
-To address this, all 90 \texttt{test\_suite.py} files were rewritten using \emph{behavioral / property-based assertions}.
-Each test now checks the function against a contract derived from the Python standard library wherever a natural oracle exists: \texttt{math.gcd}, \texttt{math.factorial}, \texttt{statistics.mean}, \texttt{calendar.isleap}, \texttt{sorted}, \texttt{max}/\texttt{min}, \texttt{isinstance}, \texttt{set}/\texttt{dict} operations, the \texttt{**} operator, and so on.
-For functions without a stdlib oracle (e.g.\ run-length encoding, Caesar cipher, custom rotation), the tests rely on round-trip consistency, multi-input batches, and locally defined reference reimplementations placed inside the test file rather than hand-computed expected values inline with each assertion.
-Spoiler comments and bug-revealing test names (e.g.\ \texttt{test\_different\_lengths}, \texttt{test\_last\_position}, the comment ``triggers IndexError when mid reaches len(arr)'') were removed.
-Where applicable, randomised inputs with a fixed seed were added so that the failing input is no longer a single hand-picked corner case.
-The full rewrite is reproducible via \texttt{scripts/rewrite\_tests\_behavioral.py}.
+We address this in two ways. First, 12 tasks (\texttt{task\_004}, \texttt{task\_005},
+\texttt{task\_008}, \texttt{task\_011}, \texttt{task\_012}, \texttt{task\_015},
+\texttt{task\_021}, \texttt{task\_027}, \texttt{task\_042}, \texttt{task\_055},
+\texttt{task\_057}, \texttt{task\_058}) where the original tests most directly
+revealed the fix were rewritten with hardcoded behavioral assertions and minimal
+spoilers; the remaining 78 retain behavioral or property-based assertions from
+the initial generation, several of which still embed reference implementations
+in helper functions. The full rewrite of the 12 tasks is reproducible via
+\texttt{benchmark/fix\_tasks.py}.
 
-We re-validated all 90 tasks after the rewrite: \texttt{buggy.py} fails at least one test and \texttt{fixed.py} passes every test on each task.
-We do not claim this fully closes the easiness gap, since the underlying functions remain short single-function snippets and the agent prompt still contains \texttt{buggy.py} verbatim; what the rewrite removes is the additional shortcut where the agent could derive the fix purely from the test traceback without reasoning about the code.
+Second, and more importantly, the agent prompt does \emph{not} include the test
+source. The agent receives only \texttt{buggy.py}; the test suite is never shown
+verbatim. Tests remain the binary oracle for scoring (pass/fail) and are
+indirectly accessible to ReAct-style agents through the \texttt{run\_tests} and
+\texttt{get\_traceback} tools, which return the failing pytest output but not the
+test source code. This design choice both removes the leakage from any
+unrewritten \texttt{\_ref} helpers and matches a more realistic bug-fixing
+scenario, where a developer typically has a buggy file plus a failure report
+rather than the full test suite verbatim. A regression test in
+\texttt{tests/test\_agent.py} (\texttt{test\_test\_suite\_code\_never\_in\_prompt})
+locks in this invariant.
+
+We re-validated all 90 tasks after these changes: \texttt{buggy.py} fails at
+least one test and \texttt{fixed.py} passes every test on each task.
+
+\textbf{Acknowledged benchmark limitations.} The benchmark is synthetic: every
+task is a single-point mutation injected into a short reference solution from
+Exercism. Difficulty skews easy, with 66 of 90 tasks (73\%) labeled
+\texttt{easy} (single-token or single-operator change) and 24 (27\%) labeled
+\texttt{medium}. The functions are short (typically under 20 lines), bugs are
+isolated (no cross-function or cross-file effects), and the dataset does not
+exercise repository-level reasoning, multi-hunk patches, dependency conflicts,
+or subtle bugs requiring long-context understanding. We treat the benchmark as a
+controlled testbed for the stem-agent mechanism rather than as a claim about
+real-world bug-repair performance, and we report all results with this
+constraint in mind. Section~\ref{sec:limitations} discusses this further.
 
 \subsection{Splits and Evaluation Protocol}
 
@@ -303,6 +337,7 @@ Agent & pass@1 & 95\% CI & Cost/task & $p$ (vs vanilla) \\
 \textbf{[TODO Day 4]}
 
 \section{Limitations and Future Work}
+\label{sec:limitations}
 
 % Be honest:
 % - Small benchmark (N=X)
