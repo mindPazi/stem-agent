@@ -111,7 +111,21 @@ Any challenger configuration that fails on any vital-sign task is rejected regar
 This prevents catastrophic specialization: the agent becoming very good at hard cases while regressing on easy ones.
 No existing prompt-optimization or agent-search framework (DSPy, OPRO, Promptbreeder, ADAS) provides an analogous formal regression-safety mechanism.
 
-\textbf{[TODO Day 2]}: Add related work positioning.
+\textbf{Related work.}
+The closest prior work falls into two categories: prompt-optimization frameworks and agent-design search systems.
+
+\textbf{Prompt-optimization} frameworks treat the agent's prompt as the sole axis of change.
+DSPy~\cite{khattab2023dspy} compiles few-shot prompts via bootstrapped examples but fixes the tool set, reasoning strategy, and model; it provides no mechanism to detect regression on previously-solved tasks.
+OPRO~\cite{yang2023opro} iteratively rewrites system prompts using a meta-prompt as a gradient substitute; it optimizes a single aggregate metric with no guard against catastrophic forgetting of easy instances.
+Promptbreeder~\cite{fernando2023promptbreeder} applies evolutionary operators to prompt strings but restricts mutation to the text axis alone and does not model multi-axis agent configurations.
+
+\textbf{Agent-design search} expands the search space beyond prompts.
+ADAS~\cite{hu2024adas} uses an LLM to propose and evaluate novel agent designs expressed as Python code; it covers a larger open-ended space but neither tracks per-task regression across iterations nor includes a formal regression-safety invariant.
+
+\textbf{Our contribution} differs on two axes.
+First, we define a \emph{multi-axis genome} covering prompt, tools, reasoning strategy, and inference parameters, and apply typed mutation operators to each axis, whereas all prior work mutates prompt text alone or uses unconstrained code generation.
+Second, we introduce the \textbf{vital signs invariant}: any challenger configuration that fails on any task the vanilla baseline solved is immediately rejected, regardless of its aggregate development-set score.
+To our knowledge, no prior prompt-optimization or agent-search framework formalizes an analogous regression-safety mechanism~\cite{khattab2023dspy,yang2023opro,fernando2023promptbreeder,hu2024adas}.
 
 \section{Benchmark and Experimental Setup}
 
@@ -154,10 +168,19 @@ Every task was validated automatically: \texttt{buggy.py} was run as the candida
 Tasks that did not satisfy this invariant, because the bugs were too subtle for the provided tests to catch, were redesigned with targeted test cases that expose the fault.
 All 90 tasks passed validation before being included.
 
-\textbf{Diagnostic tracebacks.}
-Manual inspection of 10 sampled tasks revealed that a subset of the redesigned tasks produce highly diagnostic tracebacks: for example, \texttt{task\_042} (\texttt{parse\_int("-5")} returning \texttt{5}) and \texttt{task\_021} (\texttt{test\_different\_lengths} asserting \texttt{True is False}) expose the bug location and fix with near-zero reasoning required.
-These tasks contribute little differentiation signal between agent configurations, as most strategies pass them regardless of specialization.
-Results on this subset should be interpreted with caution; the effect on aggregate pass@1 is small but non-zero.
+\textbf{Behavioral test design.}
+Manual inspection of 10 randomly sampled tasks revealed that, in the original test suites, ultra-specific assertions of the form \texttt{assert f(x) == hardcoded\_value} produced tracebacks that effectively spelled out the fix: the failing input, the wrong return value, and the expected return value, combined with the short \texttt{buggy.py}, made the bug location obvious to any competent LLM with near-zero reasoning required.
+This is the textbook ``synthetic data too easy'' failure mode and it directly compresses the dynamic range of any agent comparison: most configurations pass these tasks regardless of specialization.
+
+To address this, all 90 \texttt{test\_suite.py} files were rewritten using \emph{behavioral / property-based assertions}.
+Each test now checks the function against a contract derived from the Python standard library wherever a natural oracle exists: \texttt{math.gcd}, \texttt{math.factorial}, \texttt{statistics.mean}, \texttt{calendar.isleap}, \texttt{sorted}, \texttt{max}/\texttt{min}, \texttt{isinstance}, \texttt{set}/\texttt{dict} operations, the \texttt{**} operator, and so on.
+For functions without a stdlib oracle (e.g.\ run-length encoding, Caesar cipher, custom rotation), the tests rely on round-trip consistency, multi-input batches, and locally defined reference reimplementations placed inside the test file rather than hand-computed expected values inline with each assertion.
+Spoiler comments and bug-revealing test names (e.g.\ \texttt{test\_different\_lengths}, \texttt{test\_last\_position}, the comment ``triggers IndexError when mid reaches len(arr)'') were removed.
+Where applicable, randomised inputs with a fixed seed were added so that the failing input is no longer a single hand-picked corner case.
+The full rewrite is reproducible via \texttt{scripts/rewrite\_tests\_behavioral.py}.
+
+We re-validated all 90 tasks after the rewrite: \texttt{buggy.py} fails at least one test and \texttt{fixed.py} passes every test on each task.
+We do not claim this fully closes the easiness gap, since the underlying functions remain short single-function snippets and the agent prompt still contains \texttt{buggy.py} verbatim; what the rewrite removes is the additional shortcut where the agent could derive the fix purely from the test traceback without reasoning about the code.
 
 \subsection{Splits and Evaluation Protocol}
 
@@ -295,12 +318,38 @@ Agent & pass@1 & 95\% CI & Cost/task & $p$ (vs vanilla) \\
 
 \textbf{[TODO Day 4]}
 
-\section*{References}
-% Khattab et al. 2023 (DSPy)
-% Yang et al. 2023 (OPRO) 
-% Fernando et al. 2023 (Promptbreeder)
-% Hu et al. 2024 (ADAS)
-% Jimenez et al. 2024 (SWE-bench)
-% Widyasari et al. 2020 (BugsInPy)
+\begin{thebibliography}{9}
+
+\bibitem{khattab2023dspy}
+Omar Khattab, Arnav Singhvi, Paridhi Maheshwari, Zhiyuan Zhang, Keshav Santhanam, Sri Vardhamanan, Saiful Haq, Ashutosh Sharma, Thomas T. Joshi, Hanna Moazam, Heather Miller, Matei Zaharia, and Christopher Potts.
+\newblock {DSPy}: Compiling Declarative Language Model Calls into Self-Improving Pipelines.
+\newblock \emph{arXiv preprint arXiv:2310.03714}, 2023.
+
+\bibitem{yang2023opro}
+Chengrun Yang, Xuezhi Wang, Yifeng Lu, Hanxiao Liu, Quoc V.\ Le, Denny Zhou, and Xinyun Chen.
+\newblock Large Language Models as Optimizers.
+\newblock \emph{arXiv preprint arXiv:2309.03409}, 2023.
+
+\bibitem{fernando2023promptbreeder}
+Chrisantha Fernando, Dylan Banarse, Henryk Michalewski, Simon Osindero, and Tim Rockt\"{a}schel.
+\newblock Promptbreeder: Self-Referential Self-Improvement via Prompt Evolution.
+\newblock \emph{arXiv preprint arXiv:2309.16797}, 2023.
+
+\bibitem{hu2024adas}
+Shengran Hu, Cong Lu, and Jeff Clune.
+\newblock Automated Design of Agentic Systems.
+\newblock \emph{arXiv preprint arXiv:2408.08435}, 2024.
+
+\bibitem{jimenez2024swebench}
+Carlos E.\ Jim\'{e}nez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik Narasimhan.
+\newblock {SWE-bench}: Can Language Models Resolve Real-World {GitHub} Issues?
+\newblock In \emph{Proceedings of ICLR}, 2024.
+
+\bibitem{widyasari2020}
+Ratnadira Widyasari, Sheng Qin Sim, Camellia Lok, Haodi Qi, Jack Phan, Qijin Tay, Constance Tan, Fiona Wee, Joanna Ethelda Tan, Yuheng Yieh, Brian Goh, Ferdian Thung, Hong Jin Kang, Thiago Syn Wee Soares, Foutse Khomh, and David Lo.
+\newblock {BugsInPy}: A database of existing bugs in {Python} programs to enable controlled testing and debugging studies.
+\newblock In \emph{Proceedings of ESEC/FSE}, pages 1556--1560, 2020.
+
+\end{thebibliography}
 
 \end{document}

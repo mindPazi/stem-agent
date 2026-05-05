@@ -103,7 +103,8 @@ def load_tasks_from_dir(benchmark_dir: str | Path) -> list[Task]:
             continue
         meta_path = task_dir / "metadata.json"
         buggy_path = task_dir / "buggy.py"
-        if not meta_path.exists() or not buggy_path.exists():
+        test_suite_path = task_dir / "test_suite.py"
+        if not meta_path.exists() or not buggy_path.exists() or not test_suite_path.exists():
             continue
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         tasks.append(Task(
@@ -111,6 +112,7 @@ def load_tasks_from_dir(benchmark_dir: str | Path) -> list[Task]:
             task_dir=str(task_dir),
             buggy_code=buggy_path.read_text(encoding="utf-8"),
             description=meta.get("description", ""),
+            test_suite_code=test_suite_path.read_text(encoding="utf-8"),
             category=meta.get("category", ""),
             difficulty=meta.get("difficulty", ""),
         ))

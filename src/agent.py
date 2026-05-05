@@ -19,6 +19,7 @@ class Task:
     task_dir: str
     buggy_code: str
     description: str
+    test_suite_code: str = ""
     category: str = ""
     difficulty: str = ""
 
@@ -69,10 +70,13 @@ class BugFixAgent:
             "diff": "Return a unified diff patch of the fix.",
             "function_only": "Return only the fixed function(s), not the entire file.",
         }.get(self.config.output_format, "Return the complete fixed Python file.")
-        return (
-            f"Bug description: {task.description}\n\n"
-            f"Buggy code:\n```python\n{task.buggy_code}\n```\n\n{fmt_hint}"
+        prompt = (
+            "Fix the Python implementation so that it satisfies the provided test suite.\n\n"
+            f"Buggy code:\n```python\n{task.buggy_code}\n```"
         )
+        if task.test_suite_code:
+            prompt += f"\n\nTest suite:\n```python\n{task.test_suite_code}\n```"
+        return f"{prompt}\n\n{fmt_hint}"
 
     def _base_messages(self, task: Task) -> list[dict]:
         messages: list[dict] = [{"role": "system", "content": self.config.system_prompt}]
@@ -126,6 +130,12 @@ class BugFixAgent:
         )
 
     def _fix_react(self, task: Task) -> AgentResult:
+        if not self.tools:
+            logger.warning(
+                "react approach called with no enabled tools on task %s; falling back to direct",
+                task.task_id,
+            )
+            return self._fix_direct(task)
         messages = self._base_messages(task)
         messages[-1]["content"] += (
             "\n\nYou have tools to inspect and test the code. "
@@ -206,9 +216,7 @@ class BugFixAgent:
             {
                 "role": "user",
                 "content": (
-                    f"You need to fix a Python bug.\n\n"
-                    f"Bug description: {task.description}\n\n"
-                    f"Buggy code:\n```python\n{task.buggy_code}\n```\n\n"
+                    f"{self._user_prompt(task)}\n\n"
                     "Create a concise step-by-step plan to identify and fix the bug."
                 ),
             },
@@ -221,8 +229,7 @@ class BugFixAgent:
             {
                 "role": "user",
                 "content": (
-                    f"Bug description: {task.description}\n\n"
-                    f"Buggy code:\n```python\n{task.buggy_code}\n```\n\n"
+                    f"{self._user_prompt(task)}\n\n"
                     f"Your plan:\n{plan_resp.content}\n\n"
                     "Execute this plan and return the complete fixed Python file."
                 ),

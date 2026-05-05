@@ -74,3 +74,4 @@ def test_load_tasks_from_dir(tmp_path: Path):
     t = tasks[0]
     assert t.task_id == "task_001"
     assert "add" in t.buggy_code
+    assert TEST_CODE in t.test_suite_code

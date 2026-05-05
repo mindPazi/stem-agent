@@ -32,6 +32,7 @@ def task(tmp_path: Path) -> Task:
         task_dir=str(tmp_path),
         buggy_code="def add(a,b): return a-b",
         description="Wrong operator in add",
+        test_suite_code="from solution import add\ndef test_add(): assert add(1,2)==3\n",
     )
 
 
@@ -130,3 +131,17 @@ def test_few_shot_examples_included(task: Task):
     messages = client.chat.call_args[0][0]
     # Should have system + 2 few-shot messages + user = 4 messages
     assert len(messages) >= 4
+
+
+def test_task_description_is_not_sent_to_model(task: Task):
+    client = MagicMock()
+    client.chat.return_value = _make_resp("```python\ndef add(a,b): return a+b\n```")
+    cfg = AgentConfig(approach="direct")
+    agent = BugFixAgent(cfg, client)
+    agent.fix(task)
+
+    messages = client.chat.call_args[0][0]
+    user_prompt = messages[-1]["content"]
+    assert task.description not in user_prompt
+    assert "Bug description" not in user_prompt
+    assert task.test_suite_code in user_prompt

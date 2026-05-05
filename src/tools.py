@@ -230,7 +230,11 @@ TOOL_SCHEMAS: list[dict] = [
         "type": "function",
         "function": {
             "name": "get_traceback",
-            "description": "Run failing tests and return the full traceback",
+            "description": (
+                "Run pytest on the original buggy.py and return the full traceback. "
+                "Note: this reflects the original bug, not any fix you have proposed — "
+                "it is useful to understand what is failing, not to verify a candidate fix."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {},
