@@ -101,10 +101,13 @@ The benchmark comprises \textbf{90 self-contained Python bug-repair tasks}.
 Each task is a directory containing: \texttt{buggy.py} (the file with the injected bug), \texttt{fixed.py} (the ground-truth reference fix, never shown to agents), \texttt{test\_suite.py} (a \texttt{pytest} suite that fails on the buggy file and passes on the fixed file), and \texttt{metadata.json} (category, difficulty, source, description).
 
 \textbf{Source.}
-We initially attempted to extract tasks from BugsInPy~\cite{widyasari2020}, a dataset of real bugs from popular Python projects.
-Repository-level dependencies and complex test environments made self-contained extraction infeasible within the time budget.
-We therefore constructed all 90 tasks via \emph{mutation testing} on Exercism Python exercises: correct reference solutions were taken and a single-point bug was injected using known mutation operators (off-by-one boundary shift, wrong relational operator, inverted boolean condition, wrong variable reference, missing guard clause, wrong API argument, boundary index error).
+The initial benchmark was constructed via \emph{mutation testing} on Exercism Python exercises: correct reference solutions were taken and a single-point bug was injected using known mutation operators (off-by-one boundary shift, wrong relational operator, inverted boolean condition, wrong variable reference, missing guard clause, wrong API argument, boundary index error).
 All tasks carry \texttt{"source": "mutation\_exercism"} in their metadata.
+
+After a first model-calibration run, this benchmark proved too easy for current small OpenAI models (Table~\ref{tab:model-calibration}).
+We therefore installed and smoke-tested BugsInPy~\cite{widyasari2020}, a dataset of real bugs from popular Python projects, as the candidate harder external dataset.
+The BugsInPy framework checked out \texttt{youtube-dl} bug 2 successfully; the buggy version failed the provided test (\texttt{expected length 7, got 6}) and the fixed version passed the same test.
+\textbf{[TODO Day 3]}: finalize whether the main benchmark is replaced by a BugsInPy subset or whether BugsInPy is used as an external harder validation set alongside a redesigned synthetic benchmark.
 
 \textbf{Category distribution.}
 Tasks span 7 bug categories (Table~\ref{tab:benchmark}).
@@ -170,6 +173,30 @@ locks in this invariant.
 
 We re-validated all 90 tasks after these changes: \texttt{buggy.py} fails at
 least one test and \texttt{fixed.py} passes every test on each task.
+
+\textbf{Model/dataset calibration.}
+Before running final differentiation, we measured the minimal \texttt{vanilla\_direct} agent on all 90 synthetic tasks with three candidate small models.
+The result was a saturation warning, not a final baseline table:
+
+\begin{table}[h]
+\centering
+\caption{Model calibration on the 90-task synthetic benchmark.}
+\label{tab:model-calibration}
+\begin{tabular}{lcc}
+\toprule
+Model & Solved & pass@1 \\
+\midrule
+\texttt{gpt-4o-mini-2024-07-18} & 77/90 & 85.6\% \\
+\texttt{gpt-5.4-nano-2026-03-17} & 78/90 & 86.7\% \\
+\texttt{gpt-5.4-mini-2026-03-17} & 83/90 & 92.2\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Even the weakest candidate solved more than 85\% of the tasks with the minimal direct prompt.
+This leaves too little headroom for a meaningful before/after claim and makes confidence intervals on a 40-task test split uninformative.
+We therefore changed the experimental setup after this calibration.
+\textbf{[TODO Day 3]}: replace this sentence with the final choice: either (a) switch to a harder BugsInPy-backed benchmark subset, (b) augment the synthetic benchmark with harder medium/hard tasks, or (c) pin a weaker non-legacy model and justify why the benchmark remains unsaturated.
 
 \textbf{Acknowledged benchmark limitations.} The benchmark is synthetic: every
 task is a single-point mutation injected into a short reference solution from
@@ -250,7 +277,8 @@ A validator runs at construction time and rejects out-of-range values, unknown t
 \label{sec:baselines}
 
 Phase 0 establishes the performance floor and produces the data needed to assign splits.
-The vanilla agent is defined as a single LLM call (\texttt{approach="direct"}) with the system prompt ``You are a Python developer. Fix the bug.'', no few-shot examples, no enabled tools, and \texttt{temperature=0.0} on \texttt{gpt-4o-mini}; this is the simplest possible configuration the rest of the system mutates away from.
+The vanilla agent is defined as a single LLM call (\texttt{approach="direct"}) with the system prompt ``You are a Python developer. Fix the bug.'', no few-shot examples, no enabled tools, and \texttt{temperature=0.0} on the calibrated experiment model; this is the simplest possible configuration the rest of the system mutates away from.
+\textbf{[TODO Day 3]}: fill in the final model/dataset choice after resolving the saturation result in Table~\ref{tab:model-calibration}.
 The four configured baselines (\texttt{vanilla\_direct}, \texttt{vanilla\_cot}, \texttt{generic\_react}, \texttt{hand\_tuned}; Section~\ref{sec:splits}) are all run on the full set of 90 tasks via \texttt{scripts/run\_baselines.py}.
 Per-task pass/fail is serialised together with the agent's fix, the test duration, and the cost of the call to \texttt{results/baselines/<name>.json}.
 
@@ -382,12 +410,12 @@ Agent & pass@1 & 95\% CI & Cost/task & $p$ (vs vanilla) \\
 
 \textbf{[TODO Day 3]}: Fill with ablation results.
 
-\subsection{Cross-Domain Validation}
+\subsection{External Harder Validation}
 
-% HumanEval results: stem_agent vs vanilla
+% BugsInPy subset results: stem_agent vs vanilla
 % Interpretation
 
-\textbf{[TODO Day 3]}: Fill with cross-domain results.
+\textbf{[TODO Day 3]}: Fill with the final BugsInPy subset results. Initial smoke tests confirmed that BugsInPy is usable locally: \texttt{youtube-dl} bug 2 checks out correctly, the buggy version fails its relevant test, and the fixed version passes. A first three-bug calibration subset (\texttt{youtube-dl}: bugs 1--3) was substantially harder than the synthetic benchmark: \texttt{gpt-4o-mini-2024-07-18}, \texttt{gpt-5.4-nano-2026-03-17}, and \texttt{gpt-5.4-mini-2026-03-17} each solved 0/3 with the minimal direct BugsInPy repair harness. This is only a smoke result, but it supports switching the final evaluation to a larger BugsInPy-backed subset.
 
 % =============================================================
 % DAY 4: Write Sections 5 + 6 + 7

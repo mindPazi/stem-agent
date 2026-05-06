@@ -1,0 +1,40 @@
+{
+  "baseline": "vanilla_direct_bugsinpy",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "bugs": [
+    "youtube-dl:1",
+    "youtube-dl:2",
+    "youtube-dl:3"
+  ],
+  "created_at": "2026-05-06T11:51:35.871891+00:00",
+  "results": {
+    "youtube-dl:1": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_match_str\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_match_str (test.test_utils.TestUtil.test_match_str)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-1-buggy/youtube-dl/test/test_utils.py\", line 1051, in test_match_str\n    self.assertTrue(match_str('x', {'x': 0}))\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.006s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2577,\"end_line\":2578,\"replacement\":\"        '': lambda v: bool(v),\\n        '!': lambda v: not v,\"}]}",
+      "cost_usd": 0.000271,
+      "duration_s": 38.033
+    },
+    "youtube-dl:2": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_InfoExtractor.TestInfoExtractor.test_parse_mpd_formats\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_parse_mpd_formats (test.test_InfoExtractor.TestInfoExtractor.test_parse_mpd_formats)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-2-buggy/youtube-dl/test/test_InfoExtractor.py\", line 668, in test_parse_mpd_formats\n    expect_value(self, formats, expected_formats, None)\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-2-buggy/youtube-dl/test/helper.py\", line 137, in expect_value\n    self.assertEqual(\nAssertionError: 7 != 6 : Expect a list of length 7, but got a list of length 6 for field None\n\n----------------------------------------------------------------------\nRan 1 test in 0.055s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/extractor/common.py\",\"start_line\":2010,\"end_line\":2019,\"replacement\":\"                        try:\\n                            existing_format = next(\\n                                fo for fo in formats\\n                                if fo['format_id'] == representation_id)\\n                        except StopIteration:\\n                            full_info = formats_dict.get(representation_id, {}).copy()\\n                            full_info.update(f)\\n                            formats.append(full_info)\\n                        else:\\n                            existing_format.update(f)\\n                            if 'fragments' in f:\\n                                existing_format['fragments'] = f['fragments']\"}]}",
+      "cost_usd": 0.000349,
+      "duration_s": 38.084
+    },
+    "youtube-dl:3": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_unescape_html\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_unescape_html (test.test_utils.TestUtil.test_unescape_html)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-3-buggy/youtube-dl/test/test_utils.py\", line 282, in test_unescape_html\n    self.assertEqual(unescapeHTML('&a&quot;'), '&a\"')\nAssertionError: '&a&quot;' != '&a\"'\n- &a&quot;\n+ &a\"\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.004s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":598,\"end_line\":599,\"replacement\":\"    return re.sub(\\n        r'&([^;]+;)', lambda m: _htmlentity_transform(m.group(1)) if m.group(1) in compat_html_entities_html5 or m.group(1)[:-1] in compat_html_entities.name2codepoint or re.match(r'#(x[0-9a-fA-F]+|[0-9]+)', m.group(1)[:-1]) else '&%s' % m.group(1), s)\"}]}",
+      "cost_usd": 0.000301,
+      "duration_s": 37.676
+    }
+  },
+  "n_total": 3,
+  "n_passed": 0,
+  "pass_at_1": 0.0,
+  "updated_at": "2026-05-06T11:58:22.571782+00:00",
+  "completed_at": "2026-05-06T12:04:02.235931+00:00",
+  "total_cost_usd": 0.0,
+  "regraded_at": "2026-05-06T12:15:00+00:00"
+}
