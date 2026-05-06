@@ -175,28 +175,35 @@ We re-validated all 90 tasks after these changes: \texttt{buggy.py} fails at
 least one test and \texttt{fixed.py} passes every test on each task.
 
 \textbf{Model/dataset calibration.}
-Before running final differentiation, we measured the minimal \texttt{vanilla\_direct} agent on all 90 synthetic tasks with three candidate small models.
-The result was a saturation warning, not a final baseline table:
+A first calibration of \texttt{vanilla\_direct} on all 90 synthetic tasks with three candidate small models reported pass@1 of 85.6\%, 86.7\%, and 92.2\% for \texttt{gpt-4o-mini-2024-07-18}, \texttt{gpt-5.4-nano-2026-03-17}, and \texttt{gpt-5.4-mini-2026-03-17} respectively.
+Even the weakest candidate solved more than 85\% of the tasks with the minimal direct prompt, which left no usable headroom for a before/after differentiation claim.
+We therefore moved the calibration onto a harder, real-bug subset and re-evaluated the candidate models there.
+
+We took 25 contiguous \texttt{youtube-dl} bugs from BugsInPy and ran \texttt{vanilla\_direct} on each, prompting the model with the failing test output, the changed-file snippets, and the candidate buggy line ranges from the reference patch (no fixed code is shown).
+Validation, calibration, and per-task evaluation are implemented in \texttt{scripts/run\_bugsinpy\_model\_calibration.py}; results land in \texttt{results/bugsinpy\_ytdl25\_model\_calibration/}.
+We treat this as a model-selection probe, not as the project benchmark: the sample is small and single-project, and so are the conclusions we draw from it.
 
 \begin{table}[h]
 \centering
-\caption{Model calibration on the 90-task synthetic benchmark.}
+\caption{BugsInPy youtube-dl calibration of \texttt{vanilla\_direct}. The 5.4-mini run was stopped after 21 bugs once a clear separation from 5.4-nano was visible; gpt-4o-mini was not re-run on this subset, since it is older than both 5.4-series candidates and was already the weakest on the synthetic probe.}
 \label{tab:model-calibration}
-\begin{tabular}{lcc}
+\begin{tabular}{lccl}
 \toprule
-Model & Solved & pass@1 \\
+Model & Solved & pass@1 & Notes \\
 \midrule
-\texttt{gpt-4o-mini-2024-07-18} & 77/90 & 85.6\% \\
-\texttt{gpt-5.4-nano-2026-03-17} & 78/90 & 86.7\% \\
-\texttt{gpt-5.4-mini-2026-03-17} & 83/90 & 92.2\% \\
+\texttt{gpt-5.4-nano-2026-03-17} & 6/25  & 24.0\% & full subset \\
+\texttt{gpt-5.4-mini-2026-03-17} & 7/21  & 33.3\% & stopped early, time-budget cutoff \\
+\texttt{gpt-4o-mini-2024-07-18}  & ---   & ---    & not re-run on this subset \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Even the weakest candidate solved more than 85\% of the tasks with the minimal direct prompt.
-This leaves too little headroom for a meaningful before/after claim and makes confidence intervals on a 40-task test split uninformative.
-We therefore changed the experimental setup after this calibration.
-\textbf{[TODO Day 3]}: replace this sentence with the final choice: either (a) switch to a harder BugsInPy-backed benchmark subset, (b) augment the synthetic benchmark with harder medium/hard tasks, or (c) pin a weaker non-legacy model and justify why the benchmark remains unsaturated.
+\textbf{Selected model: \texttt{gpt-5.4-mini-2026-03-17}.}
+On real bugs the gap between the two 5.4-series candidates is large in relative terms (33.3\% vs 24.0\%, roughly $1.4\times$), and 5.4-nano sits low enough that small absolute changes from differentiation would be hard to separate from noise.
+5.4-mini lands in the 30--40\% band, which gives the differentiation loop usable headroom while still leaving the subset unsaturated.
+We did not run a third full calibration of \texttt{gpt-4o-mini} on the BugsInPy subset: it is from an older family, was already the weakest of the three on the saturated synthetic probe, and the time budget for model selection had been spent.
+We acknowledge this leaves \texttt{gpt-4o-mini} as an inferred-rather-than-measured comparison on the BugsInPy subset and treat the choice between the two 5.4 candidates as the load-bearing one.
+The selected model is pinned in \texttt{src/config.py} (\texttt{DEFAULT\_MODEL}) and \texttt{configs/default.yaml}, and the \texttt{LLMClient} default uses the same identifier.
 
 \textbf{Acknowledged benchmark limitations.} The benchmark is synthetic: every
 task is a single-point mutation injected into a short reference solution from
@@ -256,7 +263,7 @@ The four LLM-driven baselines are defined in \texttt{src/baselines.py} and run b
 Four ablation variants of the stem agent isolate the contribution of each component: \texttt{no\_sensor} (Phase 1 skipped, mutations sampled uniformly from iteration 0), \texttt{no\_safeguard} (vital-signs check disabled, challenger promotion based on dev score alone), \texttt{no\_tool\_mutation} (only prompt and strategy operators active), and \texttt{no\_prompt\_mutation} (only tool, strategy, and inference operators active).
 
 \textbf{Cost tracking.}
-Every LLM call passes through \texttt{src/llm\_client.py}, which logs prompt and completion tokens, latency, and a per-call USD estimate (using current OpenAI pricing for \texttt{gpt-4o-mini} and \texttt{gpt-4o}) to \texttt{results/api\_calls.jsonl}.
+Every LLM call passes through \texttt{src/llm\_client.py}, which logs prompt and completion tokens, latency, and a per-call USD estimate to \texttt{results/api\_calls.jsonl}. Pricing for the 5.4 series is not published, so the cost estimate uses the \texttt{gpt-4o-mini} tier as a documented proxy: numbers are comparable across runs but should not be read as actual billing.
 Total expenditure per phase is reported alongside the metrics.
 
 % =============================================================

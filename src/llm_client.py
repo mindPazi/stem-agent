@@ -10,12 +10,17 @@ import openai
 
 logger = logging.getLogger(__name__)
 
-# Pricing per token (input, output) in USD
+# Pricing per token (input, output) in USD.
+# 5.4-series rates are not published; we use the 4o-mini tier as a documented
+# proxy so that cost numbers remain comparable across runs (same scaling, not
+# real billing).
 _PRICING: dict[str, tuple[float, float]] = {
     "gpt-4o-mini": (0.15 / 1_000_000, 0.60 / 1_000_000),
     "gpt-4o-mini-2024-07-18": (0.15 / 1_000_000, 0.60 / 1_000_000),
     "gpt-4o": (2.50 / 1_000_000, 10.00 / 1_000_000),
     "gpt-4o-2024-08-06": (2.50 / 1_000_000, 10.00 / 1_000_000),
+    "gpt-5.4-mini-2026-03-17": (0.15 / 1_000_000, 0.60 / 1_000_000),
+    "gpt-5.4-nano-2026-03-17": (0.15 / 1_000_000, 0.60 / 1_000_000),
 }
 
 
@@ -33,7 +38,7 @@ class LLMClient:
     def __init__(
         self,
         api_key: str,
-        default_model: str = "gpt-4o-mini",
+        default_model: str = "gpt-5.4-mini-2026-03-17",
         log_dir: Path | None = None,
     ) -> None:
         self.client = openai.OpenAI(api_key=api_key)
@@ -71,7 +76,7 @@ class LLMClient:
             "total_tokens": response.usage.total_tokens,
         }
 
-        in_price, out_price = _PRICING.get(model, _PRICING["gpt-4o-mini"])
+        in_price, out_price = _PRICING.get(model, _PRICING["gpt-5.4-mini-2026-03-17"])
         cost = usage["prompt_tokens"] * in_price + usage["completion_tokens"] * out_price
         self.total_cost += cost
 
