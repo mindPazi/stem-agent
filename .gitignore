@@ -10,3 +10,4 @@ src/__pycache__
 .pytest_cache
 __pycache__
 stem_agent.egg-info
+results/**/api_calls.jsonl

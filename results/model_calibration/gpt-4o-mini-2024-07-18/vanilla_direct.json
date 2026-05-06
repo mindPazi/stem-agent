@@ -1,0 +1,553 @@
+{
+  "baseline": "vanilla_direct",
+  "model": "gpt-4o-mini-2024-07-18",
+  "created_at": "2026-05-06T10:15:14.400318+00:00",
+  "results": {
+    "task_001": {
+      "passed": true,
+      "duration_s": 0.497,
+      "cost_usd": 0.000133,
+      "fix": "def binary_search(arr, target):\n    low, high = 0, len(arr) - 1  # Fix: high should be len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1"
+    },
+    "task_002": {
+      "passed": false,
+      "duration_s": 0.543,
+      "cost_usd": 0.0002,
+      "fix": "def fibonacci(n):\n    if n <= 0:\n        return 0\n    elif n == 1:\n        return 0\n    elif n == 2:\n        return 1\n    \n    a, b = 0, 1\n    for _ in range(2, n):\n        a, b = b, a + b\n    return b\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(fibonacci(0))  # Output: 0\n    print(fibonacci(1))  # Output: 0\n    print(fibonacci(2))  # Output: 1\n    print(fibonacci(3))  # Output: 1\n    print(fibonacci(4))  # Output: 2\n    print(fibonacci(5))  # Output: 3\n    print(fibonacci(6))  # Output: 5\n    print(fibonacci(7))  # Output: 8"
+    },
+    "task_003": {
+      "passed": false,
+      "duration_s": 0.519,
+      "cost_usd": 0.000187,
+      "fix": "def rotate_list(lst, k):\n    if not lst:\n        return lst\n    k = k % len(lst)  # Normalize k to avoid unnecessary full rotations\n    return lst[-k:] + lst[:-k]  # Rotate the list\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(rotate_list([1, 2, 3, 4, 5], 2))  # Output: [4, 5, 1, 2, 3]\n    print(rotate_list([1, 2, 3, 4, 5], 5))  # Output: [1, 2, 3, 4, 5]\n    print(rotate_list([1, 2, 3, 4, 5], 7))  # Output: [4, 5, 1, 2, 3]\n    print(rotate_list([], 3))               # Output: []"
+    },
+    "task_004": {
+      "passed": true,
+      "duration_s": 0.571,
+      "cost_usd": 9.6e-05,
+      "fix": "def count_substrings(s, sub):\n    count = 0\n    for i in range(len(s) - len(sub) + 1):  # Fixed the loop condition\n        if s[i:i + len(sub)] == sub:\n            count += 1\n    return count"
+    },
+    "task_005": {
+      "passed": false,
+      "duration_s": 0.526,
+      "cost_usd": 0.000163,
+      "fix": "def remove_duplicates(arr):\n    if not arr:\n        return []\n    \n    result = []\n    seen = set()\n    \n    for item in arr:\n        if item not in seen:\n            seen.add(item)\n            result.append(item)\n    \n    return result"
+    },
+    "task_006": {
+      "passed": false,
+      "duration_s": 0.528,
+      "cost_usd": 0.000324,
+      "fix": "def two_sum(nums, target):\n    \"\"\"\n    Find two indices in nums such that the numbers at those indices add up to target.\n\n    :param nums: List of integers\n    :param target: Integer target sum\n    :return: List of two indices if a solution exists, otherwise an empty list\n    \"\"\"\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []\n\n# Example usage:\nif __name__ == \"__main__\":\n    nums = [2, 7, 11, 15]\n    target = 9\n    result = two_sum(nums, target)\n    print(result)  # Output: [0, 1]"
+    },
+    "task_007": {
+      "passed": true,
+      "duration_s": 0.507,
+      "cost_usd": 0.000258,
+      "fix": "def max_sliding_window(nums, k):\n    result = []\n    for i in range(len(nums) - k + 1):\n        result.append(max(nums[i:i + k]))  # Fixed the slice to nums[i:i + k]\n    return result"
+    },
+    "task_008": {
+      "passed": true,
+      "duration_s": 0.496,
+      "cost_usd": 0.000115,
+      "fix": "def count_pairs_with_sum(arr, target):\n    count = 0\n    n = len(arr)\n    for i in range(n):\n        for j in range(i + 1, n):\n            if arr[i] + arr[j] == target:  # Fixed the condition here\n                count += 1\n    return count"
+    },
+    "task_009": {
+      "passed": true,
+      "duration_s": 0.473,
+      "cost_usd": 0.00018,
+      "fix": "def diagonal_sum(matrix):\n    n = len(matrix)\n    total = 0\n    for i in range(n):  # Change n + 1 to n\n        total += matrix[i][i]\n    return total"
+    },
+    "task_010": {
+      "passed": true,
+      "duration_s": 0.498,
+      "cost_usd": 0.00018,
+      "fix": "def caesar_cipher(text, shift):\n    result = []\n    for ch in text:\n        if ch.isalpha():\n            base = ord('A') if ch.isupper() else ord('a')\n            # Correcting the shift calculation\n            result.append(chr((ord(ch) - base + shift) % 26 + base))\n        else:\n            result.append(ch)\n    return ''.join(result)\n\n# Example usage:\nif __name__ == \"__main__\":\n    text = \"Hello, World!\"\n    shift = 3\n    encrypted_text = caesar_cipher(text, shift)\n    print(encrypted_text)  # Output: \"Khoor, Zruog!\""
+    },
+    "task_011": {
+      "passed": true,
+      "duration_s": 0.486,
+      "cost_usd": 0.000183,
+      "fix": "def run_length_encode(s):\n    if not s:\n        return ''\n    \n    result = []\n    count = 1  # Start count at 1 since we have at least one occurrence of the first character\n    \n    for i in range(1, len(s)):\n        if s[i] == s[i - 1]:\n            count += 1\n        else:\n            result.append(f'{count}{s[i-1]}')\n            count = 1  # Reset count for the new character\n    \n    # Append the last counted character\n    result.append(f'{count}{s[-1]}')\n    \n    return ''.join(result)\n\n# Example usage:\n# print(run_length_encode(\"aaabbc\"))  # Output: \"3a2b1c\""
+    },
+    "task_012": {
+      "passed": true,
+      "duration_s": 0.506,
+      "cost_usd": 0.000244,
+      "fix": "def next_greater_element(arr):\n    n = len(arr)\n    result = [-1] * n\n    stack = []\n\n    for i in range(n):\n        # While stack is not empty and the current element is greater than\n        # the element corresponding to the index stored at the top of the stack\n        while stack and arr[i] > arr[stack[-1]]:\n            index = stack.pop()\n            result[index] = arr[i]\n        # Push the current index onto the stack\n        stack.append(i)\n\n    return result\n\n# Example usage:\nif __name__ == \"__main__\":\n    arr = [4, 5, 2, 10, 8]\n    print(next_greater_element(arr))  # Output: [5, 10, 10, -1, -1]"
+    },
+    "task_013": {
+      "passed": true,
+      "duration_s": 0.48,
+      "cost_usd": 0.000157,
+      "fix": "def reverse_string(s):\n    lst = list(s)\n    n = len(lst)\n    for i in range(n // 2):\n        lst[i], lst[n - 1 - i] = lst[n - 1 - i], lst[i]\n    return ''.join(lst)\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(reverse_string(\"hello\"))  # Output: \"olleh\"\n    print(reverse_string(\"Python\"))  # Output: \"nohtyP\"\n    print(reverse_string(\"12345\"))   # Output: \"54321\"\n    print(reverse_string(\"\"))         # Output: \"\"\n    print(reverse_string(\"a\"))        # Output: \"a\""
+    },
+    "task_014": {
+      "passed": true,
+      "duration_s": 0.49,
+      "cost_usd": 0.000125,
+      "fix": "def majority_element(nums):\n    n = len(nums)\n    counts = {}\n    for num in nums:\n        counts[num] = counts.get(num, 0) + 1\n        if counts[num] > n // 2:  # Changed from >= to >\n            return num\n    return -1"
+    },
+    "task_015": {
+      "passed": true,
+      "duration_s": 0.493,
+      "cost_usd": 0.000223,
+      "fix": "def trap_rain_water(height):\n    n = len(height)\n    if n < 3:\n        return 0\n    \n    left_max = [0] * n\n    right_max = [0] * n\n    \n    left_max[0] = height[0]\n    for i in range(1, n):\n        left_max[i] = max(left_max[i - 1], height[i])\n    \n    right_max[n - 1] = height[n - 1]\n    for i in range(n - 2, -1, -1):\n        right_max[i] = max(right_max[i + 1], height[i])\n    \n    water = 0\n    for i in range(n):\n        water += min(left_max[i], right_max[i]) - height[i]\n    \n    return water"
+    },
+    "task_016": {
+      "passed": true,
+      "duration_s": 0.499,
+      "cost_usd": 0.000149,
+      "fix": "def bubble_sort(arr):\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n - i - 1):\n            if arr[j] > arr[j + 1]:\n                # Correctly swap arr[j] with arr[j + 1]\n                arr[j], arr[j + 1] = arr[j + 1], arr[j]\n    return arr\n\n# Example usage\nif __name__ == \"__main__\":\n    sample_array = [64, 34, 25, 12, 22, 11, 90]\n    sorted_array = bubble_sort(sample_array)\n    print(\"Sorted array is:\", sorted_array)"
+    },
+    "task_017": {
+      "passed": true,
+      "duration_s": 0.479,
+      "cost_usd": 0.000116,
+      "fix": "def gcd(a, b):\n    if b == 0:\n        return a\n    return gcd(b, a % b)\n\n# Example usage\nif __name__ == \"__main__\":\n    print(gcd(48, 18))  # Output: 6\n    print(gcd(56, 98))  # Output: 14\n    print(gcd(101, 10)) # Output: 1"
+    },
+    "task_018": {
+      "passed": true,
+      "duration_s": 0.498,
+      "cost_usd": 0.000154,
+      "fix": "def max_profit(prices):\n    if not prices:\n        return 0\n    \n    min_price = prices[0]\n    max_profit = 0\n    \n    for price in prices[1:]:\n        # Update the minimum price if the current price is lower\n        min_price = min(min_price, price)\n        # Calculate profit based on the current price and the minimum price\n        profit = price - min_price\n        # Update the maximum profit if the current profit is higher\n        max_profit = max(max_profit, profit)\n    \n    return max_profit"
+    },
+    "task_019": {
+      "passed": true,
+      "duration_s": 0.49,
+      "cost_usd": 0.000219,
+      "fix": "def compress_string(s):\n    if not s:\n        return ''\n    result = []\n    count = 1\n    for i in range(1, len(s)):\n        if s[i] == s[i - 1]:\n            count += 1\n        else:\n            result.append(s[i - 1] + str(count))  # Append the previous character and its count\n            count = 1\n    result.append(s[-1] + str(count))  # Append the last character and its count\n    return ''.join(result)\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(compress_string(\"aaabbc\"))  # Output: \"a3b2c1\"\n    print(compress_string(\"abcd\"))    # Output: \"a1b1c1d1\"\n    print(compress_string(\"\"))         # Output: \"\"\n    print(compress_string(\"a\"))        # Output: \"a1\"\n    print(compress_string(\"aabbcc\"))   # Output: \"a2b2c2\""
+    },
+    "task_020": {
+      "passed": true,
+      "duration_s": 0.514,
+      "cost_usd": 0.000188,
+      "fix": "def find_second_largest(nums):\n    first = second = float('-inf')\n    for num in nums:\n        if num > first:\n            second = first\n            first = num\n        elif num > second and num != first:\n            second = num\n    return second if second != float('-inf') else None  # Return None if there is no second largest\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(find_second_largest([3, 1, 4, 4, 5]))  # Output: 4\n    print(find_second_largest([1, 2, 3]))         # Output: 2\n    print(find_second_largest([5, 5, 5]))         # Output: None\n    print(find_second_largest([]))                 # Output: None"
+    },
+    "task_021": {
+      "passed": true,
+      "duration_s": 0.486,
+      "cost_usd": 0.000132,
+      "fix": "def is_anagram(s, t):\n    if len(s) != len(t):\n        return False  # Changed from True to False\n    counts = {}\n    for ch in s:\n        counts[ch] = counts.get(ch, 0) + 1\n    for ch in t:\n        counts[ch] = counts.get(ch, 0) - 1\n    return all(v == 0 for v in counts.values())"
+    },
+    "task_022": {
+      "passed": true,
+      "duration_s": 0.476,
+      "cost_usd": 9.5e-05,
+      "fix": "def word_count(sentence):\n    counts = {}\n    for word in sentence.split():\n        counts[word] = counts.get(word, 0) + 1\n    return counts"
+    },
+    "task_023": {
+      "passed": true,
+      "duration_s": 0.571,
+      "cost_usd": 0.000205,
+      "fix": "def transpose(matrix):\n    n = len(matrix)\n    for i in range(n):\n        for j in range(i + 1, n):\n            # Correctly swap the elements at (i, j) and (j, i)\n            matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]\n    return matrix"
+    },
+    "task_024": {
+      "passed": true,
+      "duration_s": 0.487,
+      "cost_usd": 9.9e-05,
+      "fix": "def capitalize_words(sentence):\n    return ' '.join(word.capitalize() for word in sentence.split())\n\n# Example usage:\nif __name__ == \"__main__\":\n    test_sentence = \"hello world! this is a test.\"\n    print(capitalize_words(test_sentence))  # Output: \"Hello World! This Is A Test.\""
+    },
+    "task_025": {
+      "passed": true,
+      "duration_s": 0.484,
+      "cost_usd": 7.8e-05,
+      "fix": "def power(base, exponent):\n    result = 1\n    for _ in range(exponent):\n        result *= base\n    return result"
+    },
+    "task_026": {
+      "passed": true,
+      "duration_s": 0.492,
+      "cost_usd": 0.000123,
+      "fix": "def count_vowels(s):\n    vowels = set('aeiou')\n    return sum(1 for ch in s.lower() if ch in vowels)\n\n# Example usage:\nif __name__ == \"__main__\":\n    test_string = \"Hello World\"\n    print(f\"Number of vowels in '{test_string}': {count_vowels(test_string)}\")"
+    },
+    "task_027": {
+      "passed": true,
+      "duration_s": 0.475,
+      "cost_usd": 0.000172,
+      "fix": "def longest_common_prefix(strs):\n    if not strs:\n        return ''\n    \n    # Start with the first string as the initial prefix\n    prefix = strs[0]\n    \n    # Compare the prefix with each string in the list\n    for s in strs[1:]:\n        # Reduce the prefix until it matches the start of the current string\n        while not s.startswith(prefix):\n            prefix = prefix[:-1]  # Remove the last character from the prefix\n            if not prefix:  # If the prefix is empty, return ''\n                return ''\n    \n    return prefix"
+    },
+    "task_028": {
+      "passed": true,
+      "duration_s": 0.489,
+      "cost_usd": 0.000106,
+      "fix": "def safe_divide(a, b):\n    if b == 0:\n        return None  # or you could raise an exception or return float('inf')\n    return a / b"
+    },
+    "task_029": {
+      "passed": false,
+      "duration_s": 0.557,
+      "cost_usd": 0.000155,
+      "fix": "def list_average(nums):\n    if not nums:  # Check if the list is empty\n        return 0  # Return 0 or an appropriate value for an empty list\n    return sum(nums) / len(nums)"
+    },
+    "task_030": {
+      "passed": true,
+      "duration_s": 0.491,
+      "cost_usd": 0.000107,
+      "fix": "import math\n\ndef safe_sqrt(n):\n    if n < 0:\n        return None  # or you could raise ValueError(\"Cannot take the square root of a negative number.\")\n    return math.sqrt(n)"
+    },
+    "task_031": {
+      "passed": true,
+      "duration_s": 0.477,
+      "cost_usd": 0.000118,
+      "fix": "def stack_peek(stack):\n    if not stack:  # Check if the stack is empty\n        return None  # or raise an exception if preferred\n    return stack[-1]"
+    },
+    "task_032": {
+      "passed": true,
+      "duration_s": 0.485,
+      "cost_usd": 0.000146,
+      "fix": "def is_prime(n):\n    if n < 2:\n        return False  # Change True to False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True"
+    },
+    "task_033": {
+      "passed": true,
+      "duration_s": 0.52,
+      "cost_usd": 0.000118,
+      "fix": "def factorial(n):\n    if n < 0:\n        raise ValueError(\"Factorial is not defined for negative numbers.\")\n    result = 1  # Initialize result to 1 for multiplication\n    for i in range(1, n + 1):\n        result *= i\n    return result"
+    },
+    "task_034": {
+      "passed": true,
+      "duration_s": 0.476,
+      "cost_usd": 8.8e-05,
+      "fix": "def count_digits(n):\n    if n == 0:\n        return 1\n    n = abs(n)\n    count = 0\n    while n > 0:\n        n //= 10\n        count += 1\n    return count"
+    },
+    "task_035": {
+      "passed": false,
+      "duration_s": 0.542,
+      "cost_usd": 8.7e-05,
+      "fix": "def first_element(lst):\n    if not lst:  # Check if the list is empty\n        raise ValueError(\"The list is empty. Cannot retrieve the first element.\")\n    return lst[0]"
+    },
+    "task_036": {
+      "passed": true,
+      "duration_s": 0.502,
+      "cost_usd": 0.000154,
+      "fix": "def max_in_matrix(matrix):\n    if not matrix or not matrix[0]:  # Check if the matrix is empty or has no rows\n        return None  # or you can return float('-inf') or any other value as needed\n    return max(max(row) for row in matrix)\n\n# Example usage:\nif __name__ == \"__main__\":\n    matrix = [\n        [1, 2, 3],\n        [4, 5, 6],\n        [7, 8, 9]\n    ]\n    print(max_in_matrix(matrix))  # Output: 9\n\n    empty_matrix = []\n    print(max_in_matrix(empty_matrix))  # Output: None"
+    },
+    "task_037": {
+      "passed": true,
+      "duration_s": 0.49,
+      "cost_usd": 0.000118,
+      "fix": "def remove_item(lst, item):\n    lst = list(lst)  # Create a copy of the list to avoid modifying the original\n    if item in lst:  # Check if the item exists in the list\n        lst.remove(item)  # Remove the item if it exists\n    return lst  # Return the modified list"
+    },
+    "task_038": {
+      "passed": false,
+      "duration_s": 0.524,
+      "cost_usd": 8.6e-05,
+      "fix": "import math\n\ndef safe_log(n):\n    if n <= 0:\n        raise ValueError(\"Input must be greater than zero.\")\n    return math.log(n)"
+    },
+    "task_039": {
+      "passed": true,
+      "duration_s": 0.487,
+      "cost_usd": 0.000182,
+      "fix": "def list_depth(lst):\n    if not isinstance(lst, list):\n        return 0\n    if not lst:  # Check if the list is empty\n        return 1\n    return 1 + max(list_depth(item) for item in lst)\n\n# Example usage\nif __name__ == \"__main__\":\n    print(list_depth([1, 2, 3]))  # Output: 1\n    print(list_depth([1, [2, 3], 4]))  # Output: 2\n    print(list_depth([[[]]]))  # Output: 3\n    print(list_depth([]))  # Output: 1\n    print(list_depth([1, [2, [3, [4]]]]))  # Output: 4"
+    },
+    "task_040": {
+      "passed": true,
+      "duration_s": 0.484,
+      "cost_usd": 0.000147,
+      "fix": "def safe_pop(lst):\n    if lst:  # Check if the list is not empty\n        return lst.pop()\n    return None  # Return None if the list is empty\n\n# Example usage:\nif __name__ == \"__main__\":\n    my_list = [1, 2, 3]\n    print(safe_pop(my_list))  # Should print 3\n    print(safe_pop(my_list))  # Should print 2\n    print(safe_pop(my_list))  # Should print 1\n    print(safe_pop(my_list))  # Should print None since the list is now empty"
+    },
+    "task_041": {
+      "passed": true,
+      "duration_s": 0.557,
+      "cost_usd": 8.5e-05,
+      "fix": "def safe_dict_get(d, key, default=None):\n    return d.get(key, default)"
+    },
+    "task_042": {
+      "passed": false,
+      "duration_s": 0.538,
+      "cost_usd": 0.000136,
+      "fix": "def parse_int(s):\n    try:\n        return abs(int(s.strip()))\n    except ValueError:\n        raise ValueError(\"Invalid input: cannot convert to integer\")\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(parse_int(\"  -42 \"))  # Output: 42\n    print(parse_int(\"42\"))       # Output: 42\n    print(parse_int(\"abc\"))      # Raises ValueError"
+    },
+    "task_043": {
+      "passed": true,
+      "duration_s": 0.494,
+      "cost_usd": 0.000134,
+      "fix": "def max_subarray(nums):\n    max_sum = current = nums[0]\n    for num in nums[1:]:\n        current = max(current + num, num)  # Use max instead of min\n        max_sum = max(max_sum, current)\n    return max_sum"
+    },
+    "task_044": {
+      "passed": true,
+      "duration_s": 0.489,
+      "cost_usd": 0.000189,
+      "fix": "def is_sorted(arr):\n    for i in range(len(arr) - 1):\n        if arr[i] > arr[i + 1]:  # Change >= to > for non-decreasing order\n            return False\n    return True"
+    },
+    "task_045": {
+      "passed": true,
+      "duration_s": 0.482,
+      "cost_usd": 0.000165,
+      "fix": "def count_evens(nums):\n    return sum(1 for n in nums if n % 2 == 0)"
+    },
+    "task_046": {
+      "passed": true,
+      "duration_s": 0.507,
+      "cost_usd": 0.000126,
+      "fix": "def factorial(n):\n    result = 1\n    for i in range(1, n + 1):\n        result *= i  # Change from += to *=\n    return result"
+    },
+    "task_047": {
+      "passed": true,
+      "duration_s": 0.49,
+      "cost_usd": 0.000146,
+      "fix": "def sum_of_squares(nums):\n    return sum(x ** 2 for x in nums)"
+    },
+    "task_048": {
+      "passed": true,
+      "duration_s": 0.498,
+      "cost_usd": 0.00015,
+      "fix": "def is_palindrome(s):\n    # Clean the string by keeping only alphanumeric characters and converting to lower case\n    cleaned = ''.join(ch.lower() for ch in s if ch.isalnum())\n    # Check if the cleaned string is equal to its reverse\n    return cleaned == cleaned[::-1]\n\n# Example usage\nif __name__ == \"__main__\":\n    test_strings = [\n        \"A man, a plan, a canal: Panama\",\n        \"race a car\",\n        \" \",\n        \"No 'x' in Nixon\",\n        \"Was it a car or a cat I saw?\"\n    ]\n    \n    for test in test_strings:\n        print(f\"'{test}' is a palindrome: {is_palindrome(test)}\")"
+    },
+    "task_049": {
+      "passed": true,
+      "duration_s": 0.486,
+      "cost_usd": 0.000131,
+      "fix": "def find_max(nums):\n    if not nums:  # Check if the list is empty\n        return None  # or raise an exception, depending on the desired behavior\n\n    max_val = nums[0]  # Initialize max_val to the first element of the list\n    for num in nums:\n        if num > max_val:\n            max_val = num\n    return max_val"
+    },
+    "task_050": {
+      "passed": true,
+      "duration_s": 0.582,
+      "cost_usd": 0.000118,
+      "fix": "def find_min(nums):\n    if not nums:  # Check if the list is empty\n        return None  # or raise an exception, depending on the requirements\n\n    min_val = nums[0]  # Initialize min_val to the first element of the list\n    for num in nums:\n        if num < min_val:\n            min_val = num\n    return min_val"
+    },
+    "task_051": {
+      "passed": true,
+      "duration_s": 0.487,
+      "cost_usd": 0.000149,
+      "fix": "def fizzbuzz(n):\n    result = []\n    for i in range(1, n + 1):\n        if i % 15 == 0:\n            result.append('FizzBuzz')\n        elif i % 3 == 0:\n            result.append('Fizz')\n        elif i % 5 == 0:\n            result.append('Buzz')\n        else:\n            result.append(str(i))\n    return result"
+    },
+    "task_052": {
+      "passed": true,
+      "duration_s": 0.508,
+      "cost_usd": 0.000101,
+      "fix": "def remove_vowels(s):\n    vowels = set('aeiouAEIOU')\n    return ''.join(ch for ch in s if ch not in vowels)\n\n# Example usage:\nif __name__ == \"__main__\":\n    test_string = \"Hello World\"\n    result = remove_vowels(test_string)\n    print(result)  # Output should be \"Hll Wrld\""
+    },
+    "task_053": {
+      "passed": true,
+      "duration_s": 0.521,
+      "cost_usd": 0.000132,
+      "fix": "def count_occurrences(lst, target):\n    return sum(1 for item in lst if item == target)\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(count_occurrences([1, 2, 3, 1, 1, 4], 1))  # Output: 3\n    print(count_occurrences(['a', 'b', 'a', 'c'], 'a'))  # Output: 2\n    print(count_occurrences([], 1))  # Output: 0"
+    },
+    "task_054": {
+      "passed": true,
+      "duration_s": 0.493,
+      "cost_usd": 0.00011,
+      "fix": "def is_balanced(s):\n    count = 0\n    for ch in s:\n        if ch == '(':\n            count += 1\n        elif ch == ')':\n            count -= 1\n        if count < 0:\n            return False\n    return count == 0"
+    },
+    "task_055": {
+      "passed": true,
+      "duration_s": 0.483,
+      "cost_usd": 0.000135,
+      "fix": "def gcd_recursive(a, b):\n    if b == 0:\n        return a\n    return gcd_recursive(b, a % b)\n\n# Example usage\nif __name__ == \"__main__\":\n    print(gcd_recursive(48, 18))  # Output: 6\n    print(gcd_recursive(56, 98))  # Output: 14\n    print(gcd_recursive(101, 10)) # Output: 1"
+    },
+    "task_056": {
+      "passed": true,
+      "duration_s": 0.484,
+      "cost_usd": 0.000101,
+      "fix": "def sort_by_length(words):\n    return sorted(words, key=len)\n\n# Example usage:\nif __name__ == \"__main__\":\n    words = [\"apple\", \"banana\", \"fig\", \"grape\"]\n    sorted_words = sort_by_length(words)\n    print(sorted_words)  # Output: ['fig', 'apple', 'grape', 'banana']"
+    },
+    "task_057": {
+      "passed": true,
+      "duration_s": 0.485,
+      "cost_usd": 0.000239,
+      "fix": "def two_sum_exists(nums, target):\n    seen = set()\n    for num in nums:\n        if num in seen:\n            return True\n        seen.add(target - num)\n    return False"
+    },
+    "task_058": {
+      "passed": true,
+      "duration_s": 0.526,
+      "cost_usd": 0.000224,
+      "fix": "def flatten(lst):\n    result = []\n    for item in lst:\n        if isinstance(item, list):\n            result.extend(flatten(item))  # Use extend instead of append\n        else:\n            result.append(item)\n    return result"
+    },
+    "task_059": {
+      "passed": true,
+      "duration_s": 0.494,
+      "cost_usd": 0.00014,
+      "fix": "def is_leap_year(year):\n    return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)\n\n# Example usage\nif __name__ == \"__main__\":\n    test_years = [1900, 2000, 2004, 2018, 2020]\n    for year in test_years:\n        print(f\"{year} is a leap year: {is_leap_year(year)}\")"
+    },
+    "task_060": {
+      "passed": true,
+      "duration_s": 0.494,
+      "cost_usd": 0.000134,
+      "fix": "def product_of_list(nums):\n    result = 1  # Start with 1 since it's the multiplicative identity\n    for n in nums:\n        result *= n  # Multiply each number to the result\n    return result"
+    },
+    "task_061": {
+      "passed": true,
+      "duration_s": 0.545,
+      "cost_usd": 0.000116,
+      "fix": "def join_numbers(nums, sep=', '):\n    # Convert each number to a string before joining\n    return sep.join(str(num) for num in nums)\n\n# Example usage\nif __name__ == \"__main__\":\n    print(join_numbers([1, 2, 3]))  # Output: \"1, 2, 3\"\n    print(join_numbers([10, 20, 30], sep=' - '))  # Output: \"10 - 20 - 30\""
+    },
+    "task_062": {
+      "passed": true,
+      "duration_s": 0.497,
+      "cost_usd": 0.000151,
+      "fix": "def average(nums):\n    if not nums:  # Check for empty list to avoid division by zero\n        return 0  # or raise an exception, depending on the desired behavior\n    return sum(nums) / len(nums)  # Use regular division to get a float result"
+    },
+    "task_063": {
+      "passed": false,
+      "duration_s": 0.591,
+      "cost_usd": 0.000233,
+      "fix": "from functools import cmp_to_key\n\ndef compare(x, y):\n    # Compare two numbers by their concatenated results\n    if x + y > y + x:\n        return -1  # x should come before y\n    elif x + y < y + x:\n        return 1   # y should come before x\n    else:\n        return 0\n\ndef max_number_string(nums):\n    # Convert all numbers to strings for concatenation\n    nums_str = list(map(str, nums))\n    # Sort numbers based on the custom comparator\n    nums_str.sort(key=cmp_to_key(compare))\n    # Join the sorted numbers into a single string\n    return ''.join(nums_str)\n\n# Example usage:\n# print(max_number_string([3, 30, 34, 5, 9]))  # Output: \"9534330\""
+    },
+    "task_064": {
+      "passed": true,
+      "duration_s": 0.504,
+      "cost_usd": 0.000104,
+      "fix": "def sum_with_initial(nums, initial):\n    return sum(nums) + initial"
+    },
+    "task_065": {
+      "passed": true,
+      "duration_s": 0.467,
+      "cost_usd": 8e-05,
+      "fix": "def number_to_string(n):\n    return str(n)"
+    },
+    "task_066": {
+      "passed": true,
+      "duration_s": 0.484,
+      "cost_usd": 0.00012,
+      "fix": "def list_to_string(lst):\n    return ''.join(str(item) for item in lst)\n\n# Example usage:\n# print(list_to_string([1, 2, 3]))  # Output: '123'\n# print(list_to_string(['a', 'b', 'c']))  # Output: 'abc'\n# print(list_to_string([1, 'a', 2, 'b']))  # Output: '1a2b'"
+    },
+    "task_067": {
+      "passed": true,
+      "duration_s": 0.472,
+      "cost_usd": 6.3e-05,
+      "fix": "def is_close_to_zero(x, tolerance=1e-9):\n    return abs(x) < tolerance"
+    },
+    "task_068": {
+      "passed": true,
+      "duration_s": 0.494,
+      "cost_usd": 0.000127,
+      "fix": "def set_difference(a, b):\n    return list(set(a) - set(b))\n\n# Example usage:\nif __name__ == \"__main__\":\n    a = [1, 2, 3, 4]\n    b = [3, 4, 5, 6]\n    print(set_difference(a, b))  # Output: [1, 2]"
+    },
+    "task_069": {
+      "passed": true,
+      "duration_s": 0.523,
+      "cost_usd": 9.5e-05,
+      "fix": "def sum_values(d):\n    return sum(d.values())"
+    },
+    "task_070": {
+      "passed": true,
+      "duration_s": 0.508,
+      "cost_usd": 0.000117,
+      "fix": "def is_integer(x):\n    return isinstance(x, int)"
+    },
+    "task_071": {
+      "passed": true,
+      "duration_s": 0.506,
+      "cost_usd": 7e-05,
+      "fix": "def sorted_copy(lst):\n    return sorted(lst)"
+    },
+    "task_072": {
+      "passed": true,
+      "duration_s": 0.506,
+      "cost_usd": 0.000121,
+      "fix": "def combine_lists(a, b):\n    result = list(a)\n    result.extend(b)  # Use extend to add elements of b to result\n    return result"
+    },
+    "task_073": {
+      "passed": true,
+      "duration_s": 0.523,
+      "cost_usd": 0.000172,
+      "fix": "from itertools import zip_longest\n\ndef zip_fill(a, b, fill=None):\n    return list(zip_longest(a, b, fillvalue=fill))\n\n# Example usage:\nif __name__ == \"__main__\":\n    a = [1, 2, 3]\n    b = ['a', 'b']\n    print(zip_fill(a, b, fill='x'))  # Output: [(1, 'a'), (2, 'b'), (3, 'x')]"
+    },
+    "task_074": {
+      "passed": true,
+      "duration_s": 0.485,
+      "cost_usd": 0.000105,
+      "fix": "def group_by_length(words):\n    groups = {}\n    for word in words:\n        key = len(word)\n        if key not in groups:\n            groups[key] = []  # Initialize the list if the key doesn't exist\n        groups[key].append(word)  # Append the word to the list for this length\n    return groups"
+    },
+    "task_075": {
+      "passed": true,
+      "duration_s": 0.486,
+      "cost_usd": 0.00017,
+      "fix": "def remove_suffix_ing(word):\n    if word.endswith('ing'):\n        return word[:-3]  # Remove the last 3 characters\n    return word  # Return the original word if it doesn't end with 'ing'\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(remove_suffix_ing(\"running\"))  # Output: run\n    print(remove_suffix_ing(\"swimming\"))  # Output: swim\n    print(remove_suffix_ing(\"play\"))      # Output: play\n    print(remove_suffix_ing(\"going\"))     # Output: go"
+    },
+    "task_076": {
+      "passed": true,
+      "duration_s": 0.505,
+      "cost_usd": 0.000103,
+      "fix": "def add_elements_to_set(s, elements):\n    s = set(s)  # Convert the input to a set\n    s.update(elements)  # Use update to add each element from the iterable\n    return s"
+    },
+    "task_077": {
+      "passed": true,
+      "duration_s": 0.51,
+      "cost_usd": 0.000128,
+      "fix": "def double_all(nums):\n    return list(map(lambda x: x * 2, nums))"
+    },
+    "task_078": {
+      "passed": false,
+      "duration_s": 0.525,
+      "cost_usd": 0.000216,
+      "fix": "def rank_items(items):\n    # Create a list of tuples (item, index) and sort it based on item values\n    ranked_items = sorted(enumerate(items), key=lambda x: x[1], reverse=True)\n    # Return a list of tuples (rank, item)\n    return [(rank + 1, items[index]) for rank, (index, item) in enumerate(ranked_items)]\n\n# Example usage\nif __name__ == \"__main__\":\n    items = [5, 3, 8, 6]\n    ranked = rank_items(items)\n    print(ranked)  # Output: [(1, 8), (2, 6), (3, 5), (4, 3)]"
+    },
+    "task_079": {
+      "passed": true,
+      "duration_s": 0.494,
+      "cost_usd": 0.000116,
+      "fix": "def find_longest(words):\n    return max(words, key=len)\n\n# Example usage:\nif __name__ == \"__main__\":\n    words_list = [\"apple\", \"banana\", \"cherry\", \"date\"]\n    longest_word = find_longest(words_list)\n    print(f\"The longest word is: {longest_word}\")"
+    },
+    "task_080": {
+      "passed": true,
+      "duration_s": 0.492,
+      "cost_usd": 0.000117,
+      "fix": "def filter_positive(nums):\n    return list(filter(lambda x: x > 0, nums))"
+    },
+    "task_081": {
+      "passed": true,
+      "duration_s": 0.493,
+      "cost_usd": 0.000124,
+      "fix": "def find_max_loop(nums):\n    if not nums:  # Check if the list is empty\n        return None  # or raise an exception based on your requirements\n\n    max_val = float('-inf')\n    for i in range(len(nums)):  # Start from index 0\n        if nums[i] > max_val:\n            max_val = nums[i]\n    return max_val"
+    },
+    "task_082": {
+      "passed": true,
+      "duration_s": 0.5,
+      "cost_usd": 0.000146,
+      "fix": "def power(base, exp):\n    if exp == 0:\n        return 1  # Corrected to return 1 for any base when exp is 0\n    elif exp < 0:\n        return 1 / power(base, -exp)  # Handle negative exponents\n    return base * power(base, exp - 1)\n\n# Example usage:\n# print(power(2, 3))  # Should return 8\n# print(power(2, 0))  # Should return 1\n# print(power(2, -2)) # Should return 0.25"
+    },
+    "task_083": {
+      "passed": true,
+      "duration_s": 0.553,
+      "cost_usd": 0.000176,
+      "fix": "def fib(n):\n    if n == 0:\n        return 0\n    elif n == 1:\n        return 1\n    return fib(n - 1) + fib(n - 2)\n\n# Example usage\nif __name__ == \"__main__\":\n    print(fib(0))  # Output: 0\n    print(fib(1))  # Output: 1\n    print(fib(2))  # Output: 1\n    print(fib(3))  # Output: 2\n    print(fib(4))  # Output: 3\n    print(fib(5))  # Output: 5\n    print(fib(6))  # Output: 8"
+    },
+    "task_084": {
+      "passed": false,
+      "duration_s": 0.542,
+      "cost_usd": 0.00015,
+      "fix": "def is_palindrome(s):\n    if len(s) < 1:  # Changed from < 2 to < 1 to handle empty strings\n        return False\n    return s == s[::-1]\n\n# Example usage\nif __name__ == \"__main__\":\n    test_strings = [\"\", \"a\", \"ab\", \"aba\", \"abcba\", \"abcd\"]\n    for test in test_strings:\n        print(f\"{test!r} is palindrome: {is_palindrome(test)}\")"
+    },
+    "task_085": {
+      "passed": true,
+      "duration_s": 0.489,
+      "cost_usd": 0.000114,
+      "fix": "def get_words(sentence):\n    # Use split() without arguments to handle multiple spaces and strip leading/trailing spaces\n    return sentence.split()\n\n# Example usage:\nif __name__ == \"__main__\":\n    test_sentence = \"  Hello,   world!  This is a test.  \"\n    print(get_words(test_sentence))  # Output: ['Hello,', 'world!', 'This', 'is', 'a', 'test.']"
+    },
+    "task_086": {
+      "passed": true,
+      "duration_s": 0.492,
+      "cost_usd": 0.00015,
+      "fix": "def get_diagonal(matrix):\n    n = len(matrix)\n    return [matrix[i][i] for i in range(n)]"
+    },
+    "task_087": {
+      "passed": true,
+      "duration_s": 0.485,
+      "cost_usd": 0.000185,
+      "fix": "def quicksort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[0]\n    left = [x for x in arr[1:] if x < pivot]\n    middle = [x for x in arr if x == pivot]  # Include elements equal to the pivot\n    right = [x for x in arr[1:] if x > pivot]\n    return quicksort(left) + middle + quicksort(right)\n\n# Example usage:\nif __name__ == \"__main__\":\n    arr = [3, 6, 8, 10, 1, 2, 1]\n    sorted_arr = quicksort(arr)\n    print(sorted_arr)  # Output: [1, 1, 2, 3, 6, 8, 10]"
+    },
+    "task_088": {
+      "passed": false,
+      "duration_s": 0.566,
+      "cost_usd": 7.5e-05,
+      "fix": "def safe_mod(a, b):\n    if b == 0:\n        raise ValueError(\"The divisor 'b' cannot be zero.\")\n    return a % b"
+    },
+    "task_089": {
+      "passed": true,
+      "duration_s": 0.543,
+      "cost_usd": 0.000129,
+      "fix": "def repeat_string(s, n):\n    if n <= 0:\n        return \"\"\n    result = s\n    for _ in range(n - 1):\n        result += s\n    return result"
+    },
+    "task_090": {
+      "passed": false,
+      "duration_s": 0.53,
+      "cost_usd": 0.000127,
+      "fix": "def title_case(s):\n    return ' '.join(word.capitalize() for word in s.split())\n\n# Example usage:\nif __name__ == \"__main__\":\n    print(title_case(\"hello world\"))  # Output: \"Hello World\"\n    print(title_case(\"python programming\"))  # Output: \"Python Programming\"\n    print(title_case(\"tHIS is a tEst\"))  # Output: \"This Is A Test\""
+    }
+  },
+  "n_total": 90,
+  "n_passed": 77,
+  "pass_at_1": 0.8555555555555555,
+  "updated_at": "2026-05-06T10:22:06.305232+00:00",
+  "completed_at": "2026-05-06T10:22:06.305232+00:00",
+  "total_cost_usd": 0.012855
+}
