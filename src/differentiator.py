@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -57,7 +57,7 @@ class Differentiator:
         vital_task_ids: list[str],
         log_dir: Path,
         sensor_report: SensorReport | None = None,
-        solved_calibration_tasks: list[Task] = field(default_factory=list),
+        solved_calibration_tasks: list[Task] | None = None,
         max_iterations: int = 20,
         min_improvement: float = 0.02,
         convergence_window: int = 5,
@@ -158,13 +158,14 @@ class Differentiator:
                     delta,
                     mutation_names,
                 )
+                old_score = champion_score
                 champion = challenger
                 champion_score = challenger_score
                 record = MutationRecord(
                     iteration=iteration,
                     mutation_names=mutation_names,
                     accepted=True,
-                    score_before=champion_score - delta,
+                    score_before=old_score,
                     score_after=champion_score,
                     delta=delta,
                     reason="accepted",
