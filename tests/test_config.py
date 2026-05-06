@@ -5,14 +5,23 @@ from pathlib import Path
 
 import pytest
 
-from src.config import AVAILABLE_TOOLS, DEFAULT_CONFIG, AgentConfig, FewShotExample
+from src.config import (
+    APPROACHES,
+    AVAILABLE_TOOLS,
+    DEFAULT_CONFIG,
+    DEFAULT_MODEL,
+    OUTPUT_FORMATS,
+    TOOL_USE_STRATEGIES,
+    AgentConfig,
+    FewShotExample,
+)
 
 
 def test_default_config_fields():
     cfg = DEFAULT_CONFIG
     assert cfg.approach == "direct"
     assert cfg.temperature == 0.0
-    assert cfg.model == "gpt-4o-mini"
+    assert cfg.model == DEFAULT_MODEL
     assert cfg.enabled_tools == []
 
 
@@ -79,3 +88,34 @@ def test_available_tools_list():
     assert "read_file" in AVAILABLE_TOOLS
     assert "run_tests" in AVAILABLE_TOOLS
     assert len(AVAILABLE_TOOLS) == 7
+
+
+def test_config_declares_valid_choice_sets():
+    assert "direct" in APPROACHES
+    assert "full_file" in OUTPUT_FORMATS
+    assert "never" in TOOL_USE_STRATEGIES
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("approach", "unknown_approach", "Invalid approach"),
+        ("output_format", "markdown", "Invalid output_format"),
+        ("tool_use_strategy", "sometimes", "Invalid tool_use_strategy"),
+        ("max_iterations", 0, "max_iterations"),
+        ("temperature", 1.1, "temperature"),
+    ],
+)
+def test_config_rejects_invalid_values(field: str, value: object, message: str):
+    with pytest.raises(ValueError, match=message):
+        AgentConfig(**{field: value})
+
+
+def test_config_rejects_unknown_tools():
+    with pytest.raises(ValueError, match="Unknown enabled_tools"):
+        AgentConfig(enabled_tools=["read_file", "not_a_tool"])
+
+
+def test_config_rejects_duplicate_tools():
+    with pytest.raises(ValueError, match="duplicates"):
+        AgentConfig(enabled_tools=["read_file", "read_file"])

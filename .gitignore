@@ -1,5 +1,8 @@
 4_day_plan.md
 agent_plan.md
+.env
+.env.*
+!.env.example
 .claude
 benchmark/tasks
 tests/__pycache__

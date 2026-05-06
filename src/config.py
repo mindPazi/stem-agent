@@ -3,9 +3,29 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
+
+DEFAULT_MODEL = "gpt-4o-mini"
+
+APPROACHES = ("direct", "cot", "react", "plan_execute")
+OUTPUT_FORMATS = ("full_file", "diff", "function_only")
+TOOL_USE_STRATEGIES = ("always", "on_failure", "never")
+
+Approach = Literal["direct", "cot", "react", "plan_execute"]
+OutputFormat = Literal["diff", "full_file", "function_only"]
+ToolUseStrategy = Literal["always", "on_failure", "never"]
+
+AVAILABLE_TOOLS: list[str] = [
+    "read_file",
+    "run_tests",
+    "search_code",
+    "get_ast",
+    "get_diff",
+    "list_functions",
+    "get_traceback",
+]
 
 
 @dataclass
@@ -26,19 +46,47 @@ class AgentConfig:
     )
     few_shot_examples: list[FewShotExample] = field(default_factory=list)
     reasoning_instruction: str = ""
-    output_format: str = "full_file"  # "diff" | "full_file" | "function_only"
+    output_format: OutputFormat = "full_file"
 
     # Tools
     enabled_tools: list[str] = field(default_factory=list)
-    tool_use_strategy: str = "never"  # "always" | "on_failure" | "never"
+    tool_use_strategy: ToolUseStrategy = "never"
 
     # Strategy
-    approach: str = "direct"  # "direct" | "cot" | "react" | "plan_execute"
+    approach: Approach = "direct"
     max_iterations: int = 1
 
     # Inference
     temperature: float = 0.0
-    model: str = "gpt-4o-mini"
+    model: str = DEFAULT_MODEL
+
+    def __post_init__(self) -> None:
+        self.validate()
+
+    def validate(self) -> None:
+        if self.approach not in APPROACHES:
+            raise ValueError(
+                f"Invalid approach: {self.approach!r}. Expected one of {APPROACHES}."
+            )
+        if self.output_format not in OUTPUT_FORMATS:
+            raise ValueError(
+                f"Invalid output_format: {self.output_format!r}. Expected one of {OUTPUT_FORMATS}."
+            )
+        if self.tool_use_strategy not in TOOL_USE_STRATEGIES:
+            raise ValueError(
+                "Invalid tool_use_strategy: "
+                f"{self.tool_use_strategy!r}. Expected one of {TOOL_USE_STRATEGIES}."
+            )
+        if self.max_iterations < 1:
+            raise ValueError("max_iterations must be >= 1.")
+        if not 0.0 <= self.temperature <= 1.0:
+            raise ValueError("temperature must be between 0.0 and 1.0.")
+
+        unknown_tools = [tool for tool in self.enabled_tools if tool not in AVAILABLE_TOOLS]
+        if unknown_tools:
+            raise ValueError(f"Unknown enabled_tools: {unknown_tools}.")
+        if len(set(self.enabled_tools)) != len(self.enabled_tools):
+            raise ValueError("enabled_tools must not contain duplicates.")
 
     def clone(self) -> AgentConfig:
         return deepcopy(self)
@@ -72,16 +120,6 @@ class AgentConfig:
         return self.to_dict() == other.to_dict()
 
 
-AVAILABLE_TOOLS: list[str] = [
-    "read_file",
-    "run_tests",
-    "search_code",
-    "get_ast",
-    "get_diff",
-    "list_functions",
-    "get_traceback",
-]
-
 DEFAULT_CONFIG = AgentConfig(
     system_prompt=(
         "You are an expert Python developer. Fix the bug in the provided code. "
@@ -95,5 +133,5 @@ DEFAULT_CONFIG = AgentConfig(
     approach="direct",
     max_iterations=1,
     temperature=0.0,
-    model="gpt-4o-mini",
+    model=DEFAULT_MODEL,
 )

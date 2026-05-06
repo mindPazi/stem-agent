@@ -105,13 +105,6 @@ def test_extract_code_raw():
     assert code == "def foo(): pass"
 
 
-def test_unknown_approach_raises(task: Task):
-    cfg = AgentConfig(approach="unknown_approach")
-    agent = BugFixAgent(cfg, MagicMock())
-    with pytest.raises(ValueError, match="Unknown approach"):
-        agent.fix(task)
-
-
 def test_few_shot_examples_included(task: Task):
     from src.config import FewShotExample
 

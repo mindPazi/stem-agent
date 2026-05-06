@@ -12,9 +12,10 @@ from src.config import DEFAULT_CONFIG
 from src.evaluator import compute_pass_at_1, evaluate_split, load_tasks_from_dir
 from src.llm_client import LLMClient
 from src.tools import TOOL_FUNCTIONS
-from src.utils import setup_logging
+from src.utils import load_env_file, setup_logging
 
 setup_logging()
+load_env_file()
 
 api_key = os.environ.get("OPENAI_API_KEY")
 if not api_key:
