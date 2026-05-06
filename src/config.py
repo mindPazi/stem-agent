@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 import yaml
 
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-5.4-mini-2026-03-17"
 
 APPROACHES = ("direct", "cot", "react", "plan_execute")
 OUTPUT_FORMATS = ("full_file", "diff", "function_only")

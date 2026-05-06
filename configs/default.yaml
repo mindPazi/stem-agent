@@ -7,4 +7,4 @@ tool_use_strategy: "never"
 approach: "direct"
 max_iterations: 1
 temperature: 0.0
-model: "gpt-4o-mini"
+model: "gpt-5.4-mini-2026-03-17"
