@@ -6,7 +6,7 @@
 \usepackage{xcolor}
 \usepackage{enumitem}
 \usepackage[font=small]{caption}
-
+\usepackage{listings}
 \setlength{\parskip}{0.4em}
 \setlength{\parindent}{0em}
 
@@ -83,7 +83,16 @@
 % DAY 1: Write Section 1 + Section 2 draft
 % =============================================================
 \newpage
-
+\section{Abstract}
+\noindent
+A \emph{stem agent} starts from a minimal, generic configuration and 
+specializes itself through guided evolutionary search: it mutates its own 
+prompt, tools, and strategy, measures each change against a held-out 
+performance signal, and rejects changes that regress previously-solved tasks 
+(\emph{vital signs invariant}). We instantiate this idea on Python bug repair, a domain with objective evaluation, and compare against vanilla baselines, 
+a hand-tuned agent, and random mutation search. Existing frameworks (DSPy, 
+OPRO, Promptbreeder, ADAS) optimize prompts or agent code but none formalize 
+a regression-safety mechanism; this is our primary contribution.
 \section{Benchmark and Experimental Setup}
 
 \subsection{Benchmark}
