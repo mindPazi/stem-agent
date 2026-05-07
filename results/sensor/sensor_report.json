@@ -1,0 +1,26 @@
+{
+  "category_counts": {
+    "missing_check": 2,
+    "wrong_variable": 3,
+    "other": 1
+  },
+  "category_performance": {
+    "missing_check": 0.0,
+    "wrong_variable": 0.3333333333333333,
+    "other": 0.0
+  },
+  "failure_patterns": [
+    "agent patch applied but preserved wrong behavior",
+    "agent failed without a specific traceback signal"
+  ],
+  "success_patterns": [
+    "direct fixes work when traceback and candidate line range are precise"
+  ],
+  "suggested_mutations": [
+    "add_constraint",
+    "specialize_for_category",
+    "switch_approach"
+  ],
+  "analysis_scope": "calibration_only",
+  "reference_fixes_used": false
+}

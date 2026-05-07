@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """
-Run baseline agents on all tasks and assign frozen data splits.
+Run baseline agents on BugsInPy tasks and assign frozen splits.
 
-Outputs
--------
-results/baselines/vanilla_direct.json
-results/baselines/vanilla_cot.json
-results/baselines/generic_react.json
-results/baselines/hand_tuned.json
-benchmark/splits.json
+This is the BugsInPy counterpart of run_baselines.py. It:
+1. Loads tasks from benchmark/subset.json
+2. Runs each baseline agent on all tasks
+3. Assigns frozen splits based on vanilla_direct results
+4. Saves results to results/baselines/
+
+Usage
+-----
+python scripts/run_baselines.py
+python scripts/run_baselines.py --baselines vanilla_direct vanilla_cot
+python scripts/run_baselines.py --max-workers 4
 """
 from __future__ import annotations
 
@@ -21,10 +25,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.bugsinpy_loader import (
+    DEFAULT_BUGSINPY_ROOT,
+    DEFAULT_CACHE_ROOT,
+    DEFAULT_WORKSPACE_ROOT,
+    load_bugsinpy_task,
+)
 from src.agent import BugFixAgent
 from src.baselines import make_baselines
 from src.config import DEFAULT_MODEL
-from src.evaluator import evaluate_split, load_tasks_from_dir
+from src.evaluator import evaluate_task
 from src.llm_client import LLMClient
 from src.splits import assign_splits
 from src.utils import load_env_file, now_iso, save_json, setup_logging
@@ -32,44 +42,41 @@ from src.utils import load_env_file, now_iso, save_json, setup_logging
 logger = logging.getLogger(__name__)
 
 
-def _serialise_results(results: dict) -> dict:
-    """Convert TaskResult objects to plain dicts for JSON."""
-    out: dict = {"results": {}, "pass_at_1": 0.0, "n_passed": 0, "n_total": len(results)}
-    passed = 0
-    for tid, result in results.items():
-        out["results"][tid] = {
-            "passed": result.passed,
-            "duration_s": round(result.duration_s, 3),
-            "cost_usd": round(
-                result.agent_result.cost_usd if result.agent_result else 0.0,
-                6,
-            ),
-            "fix": result.agent_result.fix if result.agent_result else "",
-        }
-        if result.passed:
-            passed += 1
-    out["n_passed"] = passed
-    out["pass_at_1"] = passed / len(results) if results else 0.0
-    return out
+def _evaluate_single_bug(
+    task,
+    llm: LLMClient,
+    config,
+) -> dict:
+    """Run one configured agent on a BugsInPy task and evaluate the fix."""
+    agent = BugFixAgent(config, llm)
+    task_result = evaluate_task(agent, task)
+    agent_result = task_result.agent_result
+    return {
+        "passed": task_result.passed,
+        "test_output": task_result.stdout[-3000:],
+        "raw_fix": agent_result.fix if agent_result else "",
+        "cost_usd": round(agent_result.cost_usd if agent_result else 0.0, 6),
+        "duration_s": round(task_result.duration_s, 3),
+        "apply_error": task_result.stderr,
+    }
 
 
 def main() -> None:
     load_env_file()
 
-    parser = argparse.ArgumentParser(description="Run baselines and assign frozen splits")
-    parser.add_argument("--api-key", default=os.getenv("OPENAI_API_KEY"), help="OpenAI API key")
+    parser = argparse.ArgumentParser(description="Run baselines on BugsInPy and assign splits")
+    parser.add_argument("--api-key", default=os.getenv("OPENAI_API_KEY"))
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument(
-        "--baselines",
-        nargs="+",
-        default=["vanilla_direct", "vanilla_cot", "generic_react", "hand_tuned"],
-        help="Which baselines to run",
+        "--baselines", nargs="+",
+        default=["vanilla_direct"],
     )
-    parser.add_argument("--max-tasks", type=int, default=None, help="Limit tasks")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--benchmark-dir", default="benchmark/tasks")
+    parser.add_argument("--subset-path", default="benchmark/subset.json")
     parser.add_argument("--results-dir", default="results/baselines")
     parser.add_argument("--splits-path", default="benchmark/splits.json")
+    parser.add_argument("--bugsinpy-root", default=str(DEFAULT_BUGSINPY_ROOT))
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 
     setup_logging()
@@ -77,106 +84,134 @@ def main() -> None:
     if not args.api_key:
         sys.exit("ERROR: set OPENAI_API_KEY or pass --api-key")
 
+    subset_path = Path(args.subset_path)
+    if not subset_path.exists():
+        sys.exit(f"ERROR: {subset_path} not found. Run build_bugsinpy_benchmark.py first.")
+
     results_dir = Path(args.results_dir)
+    results_dir.mkdir(parents=True, exist_ok=True)
     splits_path = Path(args.splits_path)
+    bugsinpy_root = Path(args.bugsinpy_root)
 
-    if splits_path.exists():
-        logger.warning(
-            "splits.json already exists at %s; skipping split assignment. "
-            "Delete it manually if you need to reassign splits.",
-            splits_path,
-        )
-        splits_exist = True
-    else:
-        splits_exist = False
+    subset = json.loads(subset_path.read_text(encoding="utf-8"))
+    logger.info("Loaded %d bugs from %s", len(subset), subset_path)
 
-    all_tasks = load_tasks_from_dir(args.benchmark_dir)
-    if args.max_tasks:
-        all_tasks = all_tasks[: args.max_tasks]
-    task_map = {task.task_id: task for task in all_tasks}
-    metadata = {
-        task.task_id: {"category": task.category, "difficulty": task.difficulty}
-        for task in all_tasks
-    }
+    # Load all tasks
+    logger.info("Loading BugsInPy tasks (this involves git checkouts)...")
+    tasks = []
+    for entry in subset:
+        project = entry["project"]
+        bug_id = str(entry["bug_id"])
+        try:
+            task = load_bugsinpy_task(
+                project, bug_id, bugsinpy_root,
+                DEFAULT_WORKSPACE_ROOT, DEFAULT_CACHE_ROOT,
+            )
+            task.category = entry.get("category", task.category)
+            task.difficulty = entry.get("difficulty", task.difficulty)
+            tasks.append(task)
+        except Exception as exc:
+            logger.warning("Failed to load %s:%s: %s", project, bug_id, exc)
 
-    logger.info("Loaded %d tasks from %s", len(all_tasks), args.benchmark_dir)
+    logger.info("Loaded %d tasks successfully", len(tasks))
+    task_map = {task.task_id: task for task in tasks}
 
-    llm = LLMClient(api_key=args.api_key, default_model=args.model)
+    llm = LLMClient(
+        api_key=args.api_key,
+        default_model=args.model,
+        log_dir=results_dir,
+    )
+
     baselines = make_baselines(model=args.model)
-
     all_results: dict[str, dict] = {}
 
-    for name in args.baselines:
-        out_path = results_dir / f"{name}.json"
-        if out_path.exists():
-            logger.info("Skipping %s; results already exist at %s", name, out_path)
-            with open(out_path, encoding="utf-8") as f:
-                all_results[name] = json.load(f)
+    for baseline_name in args.baselines:
+        if baseline_name not in baselines:
+            logger.warning("Unknown baseline %s, skipping", baseline_name)
+            continue
+        config = baselines[baseline_name]
+        out_path = results_dir / f"{baseline_name}.json"
+        if out_path.exists() and not args.force:
+            logger.info("Skipping %s; results exist at %s", baseline_name, out_path)
+            all_results[baseline_name] = json.loads(out_path.read_text(encoding="utf-8"))
             continue
 
-        if name not in baselines:
-            logger.warning("Unknown baseline %s, skipping", name)
-            continue
+        logger.info("Running baseline: %s on %d tasks", baseline_name, len(tasks))
+        baseline_results: dict[str, dict] = {}
+        n_passed = 0
 
-        agent = BugFixAgent(baselines[name], llm)
+        for task in tasks:
+            if task.task_id in baseline_results:
+                continue
 
-        logger.info("Running baseline: %s on %d tasks", name, len(all_tasks))
-        raw = evaluate_split(agent, all_tasks)
-        serialised = _serialise_results(raw)
-        serialised["baseline"] = name
-        serialised["timestamp"] = now_iso()
-        serialised["model"] = args.model
+            logger.info("  %s: evaluating %s ...", baseline_name, task.task_id)
+            result = _evaluate_single_bug(task, llm, config)
+            baseline_results[task.task_id] = result
 
-        save_json(out_path, serialised)
-        all_results[name] = serialised
+            if result["passed"]:
+                n_passed += 1
+
+            logger.info(
+                "  %s: %s -> %s (%d/%d so far)",
+                baseline_name, task.task_id,
+                "PASS" if result["passed"] else "FAIL",
+                n_passed, len(baseline_results),
+            )
+
+            # Save incrementally
+            data = {
+                "baseline": baseline_name,
+                "model": args.model,
+                "timestamp": now_iso(),
+                "results": baseline_results,
+                "n_total": len(baseline_results),
+                "n_passed": n_passed,
+                "pass_at_1": n_passed / len(baseline_results) if baseline_results else 0.0,
+            }
+            save_json(out_path, data)
+
+        data["total_cost_usd"] = round(llm.get_total_cost(), 6)
+        save_json(out_path, data)
+        all_results[baseline_name] = data
         logger.info(
-            "%s: pass@1=%.3f (%d/%d); cumulative cost=$%.4f",
-            name,
-            serialised["pass_at_1"],
-            serialised["n_passed"],
-            serialised["n_total"],
-            llm.get_total_cost(),
+            "%s complete: pass@1=%.3f (%d/%d)",
+            baseline_name, data["pass_at_1"], n_passed, len(baseline_results),
         )
 
-    if not splits_exist and "vanilla_direct" in all_results:
+    # Assign splits from vanilla_direct
+    if not splits_path.exists() and "vanilla_direct" in all_results:
         vd = all_results["vanilla_direct"]["results"]
         vanilla_passed = {tid: info["passed"] for tid, info in vd.items()}
-        solved_count = sum(vanilla_passed.values())
-        logger.info(
-            "Split assignment: %d solved / %d unsolved by vanilla_direct",
-            solved_count,
-            len(vanilla_passed) - solved_count,
-        )
+        metadata = {
+            task.task_id: {"category": task.category, "difficulty": task.difficulty}
+            for task in tasks
+        }
         splits = assign_splits(
-            all_task_ids=list(task_map.keys()),
+            all_task_ids=[task.task_id for task in tasks],
             vanilla_results=vanilla_passed,
             metadata=metadata,
             seed=args.seed,
         )
         splits["split_created_at"] = now_iso()
         splits["split_seed"] = args.seed
-
+        splits["benchmark"] = "bugsinpy"
         save_json(splits_path, splits)
         logger.info(
-            "Splits assigned and frozen at %s\n"
-            "  vital_signs=%d  calibration=%d  dev=%d  test=%d",
-            splits_path,
+            "Splits assigned: vital_signs=%d  calibration=%d  dev=%d  test=%d",
             len(splits["vital_signs"]),
             len(splits["calibration"]),
             len(splits["dev"]),
             len(splits["test"]),
         )
-    elif not splits_exist:
-        logger.warning("vanilla_direct results not available; cannot assign splits")
+    elif splits_path.exists():
+        logger.info("Splits already exist at %s", splits_path)
 
-    logger.info("\n=== Baseline Summary ===")
+    # Summary
+    logger.info("\n=== BugsInPy Baseline Summary ===")
     for name, data in all_results.items():
         logger.info(
             "  %-20s  pass@1=%.3f  (%d/%d)",
-            name,
-            data["pass_at_1"],
-            data["n_passed"],
-            data["n_total"],
+            name, data.get("pass_at_1", 0), data.get("n_passed", 0), data.get("n_total", 0),
         )
     logger.info("Total API cost: $%.4f", llm.get_total_cost())
 

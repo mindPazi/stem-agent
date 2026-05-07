@@ -1,452 +1,168 @@
 \documentclass[11pt,a4paper]{article}
-\usepackage[margin=2.2cm]{geometry}
+\usepackage[margin=2.1cm]{geometry}
 \usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{xcolor}
-\usepackage{enumitem}
-\usepackage[font=small]{caption}
-\usepackage{listings}
-\setlength{\parskip}{0.4em}
+\usepackage[colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black]{hyperref}
+\setlength{\parskip}{0.35em}
 \setlength{\parindent}{0em}
 
-\usepackage{graphicx} % Required for inserting images
-\usepackage{enumitem}
-\usepackage[colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black]{hyperref}
-\usepackage{float}
-\usepackage{array,booktabs}
-\usepackage[most]{tcolorbox}
-\usepackage{amssymb}
-\usepackage[numbers]{natbib}
-
-% =============== BOX GRIGIO ===================
-\tcbset{
-  tabbox/.style={
-    enhanced,
-    colback=black!7,   % grigio chiaro
-    colframe=black!7,  % stesso colore per nascondere il bordo
-    boxrule=0pt,
-    arc=3mm,           % angoli arrotondati
-    left=8mm,right=8mm,top=6mm,bottom=6mm
-  }
-}
-
-\definecolor{rosepurple}{RGB}{255,90,255}
-\definecolor{orange}{RGB}{255,50,50}
-\definecolor{blue}{RGB}{90, 90, 255}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
-\DeclareMathOperator*{\argmax}{arg\,max}
-\DeclareMathOperator*{\argmin}{arg\,min}
-
-\lstdefinestyle{mystyle}{
-    backgroundcolor=\color{backcolour},
-    commentstyle=\color{codegreen},
-    keywordstyle=\color{magenta},
-    numberstyle=\tiny\color{codegray},
-    stringstyle=\color{codepurple},
-    basicstyle=\footnotesize\ttfamily,
-    breakatwhitespace=false,
-    breaklines=true,
-    captionpos=b,
-    keepspaces=true,
-    numbers=left,
-    numbersep=5pt,
-    showspaces=false,
-    showstringspaces=false,
-    showtabs=false,
-    tabsize=2
-}
-
-\lstset{style=mystyle}
 \begin{document}
-\begin{titlepage}
-    \centering
-    \vspace*{4cm}
 
-    \includegraphics[width=1\textwidth]{jetbrains-logo.png}\par
-    \vspace{2cm}
+\begin{center}
+{\Large\bfseries Stem Agent for Real Python Bug Repair}\\
+Andrea Gennari
+\end{center}
 
-    {\Huge \bfseries Stem Agent: Self-Specializing AI Agent Through Guided Evolutionary Configuration Search\par}
-    \vspace{1cm}
-    {\Large Andrea Gennari\par}
+\section{Goal and Scope}
 
-    \vfill
-\end{titlepage}
+The project asks whether a minimal agent can specialize itself for a class of
+tasks. I instantiate the idea in a narrow, objectively scored domain: Python
+bug repair on BugsInPy. The agent starts as a single-call direct bug fixer and
+searches over a bounded configuration space: prompt constraints, reasoning
+strategy, tool availability, examples, maximum iterations, and temperature.
 
-\tableofcontents
+The important design choice is that this is not a universal agent. It is a
+stem agent for one task class: repairing localized Python bugs when given a
+failing test output and candidate buggy line ranges. That scope is deliberately
+smaller than SWE-bench-style issue resolution. It avoids synthetic benchmark
+saturation while keeping the evaluation runnable in a one-day setting.
 
+\section{Benchmark and Splits}
 
-% =============================================================
-% DAY 1: Write Section 1 + Section 2 draft
-% =============================================================
-\newpage
-\section{Abstract}
-\noindent
-A \emph{stem agent} starts from a minimal, generic configuration and 
-specializes itself through guided evolutionary search: it mutates its own 
-prompt, tools, and strategy, measures each change against a held-out 
-performance signal, and rejects changes that regress previously-solved tasks 
-(\emph{vital signs invariant}). We instantiate this idea on Python bug repair, a domain with objective evaluation, and compare against vanilla baselines, 
-a hand-tuned agent, and random mutation search. Existing frameworks (DSPy, 
-OPRO, Promptbreeder, ADAS) optimize prompts or agent code but none formalize 
-a regression-safety mechanism; this is our primary contribution.
-\section{Benchmark and Experimental Setup}
+The benchmark is a frozen subset of 26 real BugsInPy bugs from \texttt{youtube-dl},
+stored in \texttt{benchmark/subset.json}. Each task contains the project, bug id,
+category, difficulty, and changed-line count. The harness checks out the buggy
+commit, copies the maintainer test files from the fixed commit, applies the
+agent's JSON edits, and runs the BugsInPy test command under WSL.
 
-\subsection{Benchmark}
+The prompt intentionally uses a fault-localization oracle: snippets around the
+reference patch's old-file line ranges are shown, but the fixed code is never
+shown. This means the benchmark evaluates patch generation and local reasoning,
+not full repository-scale bug localization. That limitation is explicit because
+otherwise the evaluation would overclaim.
 
-The primary benchmark is a curated subset of \textbf{BugsInPy}~\cite{widyasari2020}, a database of real, maintainer-fixed bugs in popular open-source Python projects.
-Each task is reproduced from the BugsInPy metadata: a buggy commit hash, a fixed commit hash, the maintainer-listed test files that pin the failure, and a per-bug \texttt{requirements.txt}.
-Evaluation runs in an isolated WSL workspace per task: we check out the buggy commit, copy the maintainer's test files from the fixed commit so the failing test exists in both versions, install the per-bug Python dependencies into a cached virtualenv, apply the agent's proposed edits, and execute \texttt{bugsinpy\_run\_test.sh} under a 60-second timeout.
-A task is scored as solved (pass@1=1) iff every maintainer-listed test passes after the agent's edits are applied.
-\textbf{[TODO Day 3]}: report the final $(\mathrm{project}, n)$ pairs and the total $N$ in \texttt{benchmark/bugsinpy\_subset.json} once the subset is frozen; current target is $N \in [40, 60]$ with \texttt{youtube-dl} as the largest contributor.
+The split is fixed in \texttt{benchmark/splits.json}:
 
-\textbf{Validation.}
-Every candidate bug is validated before inclusion: the buggy commit must fail at least one of the maintainer-listed tests under the harness, and the fixed commit must pass every listed test under the same harness.
-Bugs requiring Docker, GPU, live network calls inside the test, or pinned to a Python version unavailable in the WSL environment are discarded with their reason recorded in \texttt{benchmark/bugsinpy\_excluded.jsonl}.
-The validated subset that motivated the model-selection probe (\texttt{youtube-dl}, bugs 1--26 minus bug 16, which fails the harness) is already serialised in \texttt{results/bugsinpy\_model\_calibration/validated\_subset.json}.
-
-\textbf{Why the benchmark is BugsInPy and not the synthetic probe we started with.}
-The project initially targeted a benchmark of 90 self-contained Python tasks generated by mutation testing on Exercism reference solutions (single-token operator flips, off-by-one boundary shifts, inverted boolean conditions, wrong variable references, missing guard clauses, wrong API arguments, boundary index errors).
-A Day 1 calibration of \texttt{vanilla\_direct} on all 90 tasks reported pass@1 of 85.6\%, 86.7\%, and 92.2\% for \texttt{gpt-4o-mini-2024-07-18}, \texttt{gpt-5.4-nano-2026-03-17}, and \texttt{gpt-5.4-mini-2026-03-17} respectively.
-With even the weakest candidate solving $\geq 85\%$ of the tasks under a minimal direct prompt, the maximum demonstrable improvement on a 40-task test split sits below the bootstrap-CI noise floor on a per-task binary metric; the synthetic benchmark cannot support a credible before/after stem-agent claim.
-This is the textbook ``synthetic data too easy'' failure mode and was the primary signal to abandon the synthetic benchmark as the evaluation target.
-The 90 mutation\_exercism tasks remain on disk under \texttt{benchmark/synthetic\_deprecated/} for replication of the saturation result and as a sanity check that the agent infrastructure runs end-to-end on a trivial regime; they do not appear in any results table.
-
-\textbf{Test-source leakage and prompt design.}
-The agent prompt never contains the verbatim test source.
-For BugsInPy tasks the agent receives the failing test output, the changed-file snippets, and the patch's old-file line ranges (no fixed code is ever shown), and produces JSON edits over the buggy files.
-The maintainer's test file is copied into the workspace before the agent runs but is never serialised into the agent's prompt.
-The test suite remains the binary oracle for scoring, accessible to ReAct-style agents only indirectly through the \texttt{run\_tests} and \texttt{get\_traceback} tools, which return the failing pytest output (stack trace, assertion message) but not the test source code.
-A regression test in \texttt{tests/test\_agent.py} (\texttt{test\_test\_suite\_code\_never\_in\_prompt}) locks this invariant in for the synthetic harness; the BugsInPy harness obtains the same property by construction (the test files are never read into a Python string before being passed to the LLM).
-
-\textbf{Model selection.}
-After the synthetic saturation result, model selection moved to a real-bug probe.
-We took 25 contiguous \texttt{youtube-dl} bugs from BugsInPy and ran \texttt{vanilla\_direct} on each, prompting the model with the failing test output, the changed-file snippets, and the candidate buggy line ranges from the reference patch (no fixed code is shown).
-The validated subset is saved in \texttt{results/bugsinpy\_model\_calibration/validated\_subset.json}; per-task results land in \texttt{results/bugsinpy\_ytdl25\_model\_calibration/<model>/vanilla\_direct\_bugsinpy.json}.
-We treat this as a model-selection probe, not as the project benchmark: the sample is small and single-project, and the headline numbers below are reported with that scope.
-
-\begin{table}[h]
-\centering
-\caption{BugsInPy youtube-dl calibration of \texttt{vanilla\_direct} on the same 25-bug subset. \texttt{gpt-4o-mini} was not re-run on this subset: it is from an older family and was already the weakest of the three on the saturated synthetic probe, so a third full calibration was not budget-justified.}
-\label{tab:model-calibration}
-\begin{tabular}{lccl}
-\toprule
-Model & Solved & pass@1 & Notes \\
-\midrule
-\texttt{gpt-5.4-nano-2026-03-17} & 6/25  & 24.0\% & full subset \\
-\texttt{gpt-5.4-mini-2026-03-17} & 7/25  & 28.0\% & full subset \\
-\texttt{gpt-4o-mini-2024-07-18}  & n/a   & n/a    & not re-run on this subset \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Selected model: \texttt{gpt-5.4-mini-2026-03-17}.}
-5.4-mini outperforms 5.4-nano on the same 25-bug subset (28.0\% vs 24.0\%) and lands in a range that leaves usable headroom for differentiation without saturating the benchmark.
-We did not run a third full calibration of \texttt{gpt-4o-mini} on the BugsInPy subset: it is from an older family, was already the weakest of the three on the saturated synthetic probe, and re-running it would have consumed calibration budget without a plausible path to selection.
-We acknowledge this leaves \texttt{gpt-4o-mini} as an inferred-rather-than-measured comparison on the BugsInPy subset and treat the choice between the two 5.4 candidates as the load-bearing decision.
-A rigorous selection would involve statistical testing to verify whether the observed gap is above noise rather than a sampling artefact; with $n{=}25$ the difference is not significant on its own.
-Given time constraints, and given the convergence of evidence (5.4-mini is a newer, larger model in the same family, it scored higher on both the saturated synthetic probe and the real-bug subset, and 4o-mini was already eliminated), we accept 5.4-mini as the working model without a formal significance gate.
-The selected model is pinned in \texttt{src/config.py} (\texttt{DEFAULT\_MODEL}) and \texttt{configs/default.yaml}, and the \texttt{LLMClient} default uses the same identifier.
-
-\textbf{Acknowledged benchmark limitations.}
-The benchmark is single-language (Python) and, in its current form, skewed toward a small number of source projects, with \texttt{youtube-dl} contributing the majority of validated bugs.
-Each bug is scored against the maintainer's existing test rather than against a hidden test set, so a fix that produces the maintainer's expected output but breaks an unobserved invariant scores as a pass; this is the standard BugsInPy contract.
-The benchmark therefore does not exercise multi-hunk cross-repository reasoning, dependency-conflict resolution, or stylistic correctness, and does not penalise plausible-but-wrong fixes that the maintainer's test happens not to cover.
-We treat the BugsInPy subset as a real-but-narrow evaluation surface and report all results with this scope in mind; Section~\ref{sec:limitations} returns to these points.
-
-\subsection{Splits and Evaluation Protocol}
-\label{sec:splits}
-
-The BugsInPy subset is partitioned into four non-overlapping splits, assigned once after the Phase 0 baseline run and frozen for the remainder of the project in \texttt{benchmark/splits.json}.
-
-\begin{table}[h]
-\centering
-\caption{Split sizes and roles (target $N{=}60$). \textbf{[TODO Day 3]}: replace with the final counts once the BugsInPy subset is locked.}
-\label{tab:splits}
+\begin{center}
 \begin{tabular}{lcl}
 \toprule
-Split & Size & Used by \\
+Split & Size & Role \\
 \midrule
-Vital Signs & 6  & Phase 2 (regression-safety invariant) \\
-Calibration & 8  & Phase 1 (sensor analysis only) \\
-Dev         & 18 & Phase 2 (champion/challenger selection) \\
-Test        & 28 & Phase 3 (final evaluation, never touched during search) \\
+Vital signs & 4 & Regression-safety invariant during differentiation \\
+Calibration & 6 & Sensor analysis only \\
+Dev & 8 & Champion/challenger selection \\
+Test & 8 & Final held-out evaluation \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
-\textbf{Assignment procedure (deterministic, seed=42).}
-After the baseline run, vital signs are sampled from the set of bugs that \texttt{vanilla\_direct} solves correctly, stratified by source project so each project contributes proportionally.
-The remaining bugs are then drawn into calibration, dev, and test in that order, again stratified by project.
-Sampling is implemented in \texttt{src/splits.py} and the assignment is invoked by \texttt{scripts/assign\_splits.py}; the resulting JSON file is overwrite-protected by the script unless \texttt{--force} is passed.
+Vital-sign tasks were selected from bugs solved by the vanilla direct baseline.
+Calibration, dev, and test are disjoint and fixed before any stem-agent search.
+The test split is small, so all percentages are reported with counts.
 
-\textbf{Freeze policy.}
-The test split is never read during Phase 1 or Phase 2; only \texttt{scripts/run\_phase3.py} (Day 3) loads it.
-A regression test (\texttt{tests/test\_splits.py}) verifies that the four splits are non-overlapping and exhaustive.
+\section{Stem-Agent Mechanism}
 
-\textbf{Primary metric: pass@1.}
-Per task, the agent emits a single fix; we run the full \texttt{pytest} suite in a sandboxed subprocess with a 30-second timeout and score the task as 1 if all tests pass and 0 otherwise.
-Aggregate pass@1 is the mean over the test split.
-We report counts (e.g.\ ``23/40'') alongside percentages so that the small split size remains visible.
+The agent genome is the \texttt{AgentConfig} dataclass in \texttt{src/config.py}.
+It captures the system prompt, few-shot examples, output format, enabled tools,
+tool policy, approach (\texttt{direct}, \texttt{cot}, \texttt{react},
+\texttt{plan\_execute}), maximum iterations, temperature, and model. The
+validator rejects malformed configurations, so every mutation produces a
+runnable agent or no change.
 
-\textbf{Statistical reporting (Day 3).}
-Final pass@1 numbers will be reported with bootstrap 95\% confidence intervals (10{,}000 resamples of the test set) and pairwise McNemar's test against \texttt{vanilla\_direct}, alongside per-category breakdowns.
+The differentiation loop is implemented in \texttt{src/differentiator.py}.
+Each iteration samples one or two mutation operators from \texttt{src/mutator.py},
+evaluates the challenger on dev plus vital signs, and promotes it only if dev
+pass@1 improves by more than \texttt{min\_improvement}. The safeguard rejects a
+challenger if it regresses the vital-sign split. This is the main engineering
+idea: specialization is allowed only when it does not break simple behavior the
+base agent already had.
 
-\textbf{Baselines.}
-Five baselines establish the comparison frame: \texttt{vanilla\_direct} (minimal prompt, no tools, single LLM call); \texttt{vanilla\_cot} (same prompt with a chain-of-thought instruction); \texttt{generic\_react} (all seven tools enabled, generic prompt, ReAct loop with up to five iterations); \texttt{hand\_tuned} (a manually-engineered system prompt with a curated tool subset, intended as the realistic ceiling for human prompt engineering); and \texttt{random\_search} (the same mutation budget as the stem agent but without sensor guidance and without the vital-signs safeguard).
-The four LLM-driven baselines are defined in \texttt{src/baselines.py} and run by \texttt{scripts/run\_baselines.py}; \texttt{random\_search} is produced by Day 3.
+The sensor runs once on calibration results. In the one-day pipeline I added a
+deterministic \texttt{--heuristic} mode to avoid spending extra calls only for
+diagnostics. The generated report is in \texttt{results/sensor/sensor\_report.json}.
+For this subset it found calibration pass@1 of 1/6, with failures concentrated
+in \texttt{missing\_check}, \texttt{wrong\_variable}, and \texttt{other}. It
+suggested \texttt{add\_constraint}, \texttt{specialize\_for\_category}, and
+\texttt{switch\_approach}. The report explicitly records
+\texttt{reference\_fixes\_used=false}; no fixed BugsInPy code is used by the
+sensor.
 
-\textbf{Ablations.}
-Two ablation variants of the stem agent isolate the contribution of each component: \texttt{no\_sensor} (Phase 1 skipped, mutations sampled uniformly from iteration 0) and \texttt{no\_safeguard} (vital-signs check disabled, challenger promotion based on dev score alone).
+\section{Current Evidence}
 
-\textbf{Cost tracking.}
-Every LLM call passes through \texttt{src/llm\_client.py}, which logs prompt and completion tokens, latency, and a per-call USD estimate to \texttt{results/api\_calls.jsonl}. Pricing for the 5.4 series is not published, so the cost estimate uses the \texttt{gpt-4o-mini} tier as a documented proxy: numbers are comparable across runs but should not be read as actual billing.
-Total expenditure per phase is reported alongside the metrics.
+The available real-bug model-selection result is the stored
+\texttt{vanilla\_direct} run on 25 BugsInPy bugs:
 
-% =============================================================
-% DAY 2: Write Sections 3 + 4.1
-% =============================================================
-
-\section{The Stem Agent}
-\label{sec:stem-agent}
-
-The agent's ``genome'' is a single \texttt{AgentConfig} dataclass (\texttt{src/config.py}) covering four independent axes:
-prompt (\texttt{system\_prompt}, \texttt{few\_shot\_examples}, \texttt{reasoning\_instruction}, \texttt{output\_format});
-tools (\texttt{enabled\_tools} drawn from a fixed registry of seven, \texttt{tool\_use\_strategy});
-strategy (\texttt{approach} $\in$ \{\texttt{direct}, \texttt{cot}, \texttt{react}, \texttt{plan\_execute}\}, \texttt{max\_iterations});
-and inference (\texttt{temperature}, \texttt{model}).
-A validator runs at construction time and rejects out-of-range values, unknown tools, and incompatible combinations, so that every config produced by mutation is structurally well-formed.
-
-\subsection{Baseline Establishment}
-\label{sec:baselines}
-
-Phase 0 establishes the performance floor and produces the data needed to assign splits.
-The vanilla agent is defined as a single LLM call (\texttt{approach="direct"}) with the system prompt ``You are a Python developer. Fix the bug.'', no few-shot examples, no enabled tools, and \texttt{temperature=0.0} on the selected model \texttt{gpt-5.4-mini-2026-03-17}; this is the simplest possible configuration the rest of the system mutates away from.
-The four configured baselines (\texttt{vanilla\_direct}, \texttt{vanilla\_cot}, \texttt{generic\_react}, \texttt{hand\_tuned}; Section~\ref{sec:splits}) are all run on the full BugsInPy subset via \texttt{scripts/run\_baselines.py}.
-Per-task pass/fail is serialised together with the agent's fix, the test duration, and the cost of the call to \texttt{results/baselines/<name>.json}.
-
-The vanilla pass/fail vector is then consumed by \texttt{scripts/assign\_splits.py} to produce \texttt{benchmark/splits.json} (Section~\ref{sec:splits}).
-This is the only point at which the test split is touched before Phase 3: the per-task results from Phase 0 are stored, but no result that informs Phase 1 or Phase 2 reads from the test partition.
-
-\textbf{[TODO Day 3]}: Fill in pass@1 per baseline and the resulting category distribution within each split, once \texttt{scripts/run\_baselines.py} has been executed.
-
-\subsection{Sensing}
-\label{sec:sensing}
-
-Phase 1 (\texttt{src/sensor.py}, run via \texttt{scripts/run\_sensor.py}) is a single, static diagnostic pass over the calibration split.
-It reads the vanilla pass/fail labels and proposed fixes already produced in Phase 0, and emits a \texttt{SensorReport} consumed by the differentiation loop.
-Importantly, the sensor and the \texttt{add\_exemplar} mutation operator are the only components allowed to inspect the reference fix (the fixed-commit contents for BugsInPy tasks), and only for calibration bugs; this is recorded explicitly in the report's \texttt{analysis\_scope} and \texttt{reference\_fixes\_used} fields so that the leakage scope is auditable.
-
-Concretely, the sensor performs three steps.
-First, it computes per-category counts and per-category pass rate on calibration.
-Second, for each calibration task that vanilla \emph{failed}, it issues a single LLM call passing the buggy code, the agent's wrong fix, and the reference fix, and asks for a one-sentence concrete failure pattern (e.g.\ ``agent ignored boundary condition'' or ``agent changed the wrong variable'').
-Third, it issues two aggregation calls: one to extract success patterns from passing tasks, and one to map the observed failure patterns and worst-performing categories onto a subset of the twelve mutation operator names listed in Table~\ref{tab:operators}.
-The resulting suggestions are validated against the operator registry and any unknown names are discarded; if the LLM call fails or returns malformed JSON, a heuristic fallback (\texttt{specialize\_for\_category}, \texttt{add\_constraint}, plus \texttt{add\_exemplar} when boundary-class categories dominate) keeps the loop running.
-The sensor never re-runs during Phase 2: its output is a frozen \texttt{results/sensor/sensor\_report.json}.
-
-\textbf{[TODO Day 3]}: Fill in the calibration category distribution, vanilla calibration pass@1, the top failure and success patterns reported by the sensor, and the suggested operator subset, once \texttt{scripts/run\_sensor.py} has been executed.
-
-\subsection{Differentiation}
-\label{sec:differentiation}
-
-Phase 2 (\texttt{src/differentiator.py}) implements an evolutionary mutation-and-selection loop with a hard regression-safety invariant.
-The loop runs for at most 15 iterations and stops early on convergence.
-
-\textbf{Mutation operators.}
-Twelve typed operators (Table~\ref{tab:operators}) act on the four genome axes.
-Each operator takes an \texttt{AgentConfig} together with a \texttt{MutationContext} (sensor report, iteration index, mutation history, the pool of vanilla-solved calibration tasks, the LLM client, and a seeded \texttt{random.Random}) and returns a new, validated \texttt{AgentConfig}.
-Three operators (\texttt{add\_exemplar}, \texttt{rephrase\_system}, and the optional reasoning trace inside \texttt{add\_exemplar}) are LLM-assisted; the remaining nine are deterministic given the RNG state.
-Operators that would produce no change for the current config (e.g.\ \texttt{remove\_exemplar} when none are present, \texttt{enable\_tool} when all seven are already enabled) are filtered before sampling.
-
-\begin{table}[h]
-\centering
-\caption{Mutation operators (\texttt{src/mutator.py}).}
-\label{tab:operators}
-\begin{tabular}{lll}
+\begin{center}
+\begin{tabular}{lcc}
 \toprule
-Axis & Operator & Effect \\
+Model & Solved & pass@1 \\
 \midrule
-Prompt   & \texttt{add\_exemplar}            & Append a few-shot example from a solved calibration task \\
-Prompt   & \texttt{remove\_exemplar}         & Drop a randomly-chosen few-shot example \\
-Prompt   & \texttt{rephrase\_system}         & LLM-rewrite the system prompt preserving its semantics \\
-Prompt   & \texttt{add\_constraint}          & Inject a debugging-rule sentence not already present \\
-Prompt   & \texttt{remove\_constraint}       & Remove a previously-injected constraint sentence \\
-Prompt   & \texttt{specialize\_for\_category} & Append category-specific guidance (worst-performing first) \\
-Tools    & \texttt{enable\_tool}             & Add a tool to \texttt{enabled\_tools} \\
-Tools    & \texttt{disable\_tool}            & Remove a tool from \texttt{enabled\_tools} \\
-Strategy & \texttt{switch\_approach}         & Cycle direct $\to$ cot $\to$ react $\to$ plan\_execute \\
-Strategy & \texttt{adjust\_iterations}       & Change \texttt{max\_iterations} by $\pm 1$ or $\pm 2$ (clamped to $[1,10]$) \\
-Output   & \texttt{switch\_output\_format}   & Cycle full\_file $\to$ diff $\to$ function\_only \\
-Inference & \texttt{adjust\_temperature}     & Nudge temperature by $\pm 0.1$ (clamped to $[0,1]$) \\
+\texttt{gpt-5.4-nano-2026-03-17} & 6/25 & 24.0\% \\
+\texttt{gpt-5.4-mini-2026-03-17} & 7/25 & 28.0\% \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
-\textbf{Sampling strategy.}
-Each iteration samples one or two operators (with weights $0.7$ and $0.3$) from the set of \emph{applicable} operators.
-The sampling distribution is iteration-dependent.
-For iterations $0$--$5$, when the sensor signal is most relevant, $70\%$ of picks come from the operators the sensor suggested and $30\%$ from the rest of the registry.
-For iterations $6$--$15$ the sampler switches to uniform random over applicable operators, broadening the search.
-For iterations $16$ and beyond, sampling is targeted: the worst-performing categories from the sensor report drive a preference for \texttt{specialize\_for\_category}, \texttt{add\_constraint}, and \texttt{add\_exemplar}.
-An \emph{anti-oscillation} filter excludes any operator whose name appears in a rejected record within the last three iterations, unless removing it would empty the candidate pool.
+The selected model is \texttt{gpt-5.4-mini-2026-03-17}. This is not a
+statistically strong model comparison; it is a pragmatic one-day choice because
+the gap is small and the sample is small.
 
-\textbf{Champion / challenger selection.}
-The challenger is evaluated on the union of dev and vital splits in a single batch, and the dev-set pass@1 is the score that drives selection.
-A challenger is promoted to champion only when its dev score exceeds the current champion's by more than \texttt{min\_improvement = 0.02} (a 2 percentage point floor that prevents accepting noise on the small dev split).
-The champion configuration is saved to disk on every promotion (\texttt{champion.yaml}), so a crashed run can be inspected at the last accepted state.
+On the frozen 8-task test split, the stored Phase 0 baseline solves 1/8:
+\texttt{youtube-dl:13}. The other seven selected test bugs fail under
+\texttt{vanilla\_direct}. The final after-number for \texttt{stem\_agent} is
+produced by:
 
-\textbf{Vital-signs safeguard.}
-Independently of the dev score, the safeguard (\texttt{src/safeguard.py}) requires that the challenger's pass rate on the vital-signs split satisfy $\ge \texttt{vital\_threshold}$ (default $1.0$).
-A challenger that fails any vital task is rejected outright, and the iteration is logged with \texttt{reason="safeguard"}.
-Unlike pure dev-score selection, this prevents the well-known failure mode where a specialized configuration trades easy-task correctness for marginal gains on harder ones.
-The threshold is configurable on the command line so that the no\_safeguard ablation can be produced by setting it to $0$.
+\begin{verbatim}
+python scripts/run_differentiation.py --max-iterations 5
+python scripts/run_final_eval.py --agents vanilla_direct stem_agent
+\end{verbatim}
 
-\textbf{Convergence.}
-A separate check (\texttt{src/convergence.py}) terminates the loop early if no \emph{accepted} record in the last $5$ iterations had \texttt{delta} above \texttt{min\_improvement}.
-This is conservative: rejected iterations alone never trigger early stopping, only a sustained absence of real improvements does.
+The code writes the final comparison to
+\texttt{results/final\_eval/test\_results.json}, including pass@1, bootstrap
+confidence intervals, cost, and McNemar's test when available. I do not claim a
+stem-agent improvement unless that file contains it.
 
-\textbf{Logging.}
-Every iteration appends one JSON object to \texttt{results/differentiation/differenti\-ation\_log.jsonl} containing the iteration index, the operators tried, the score before and after, the delta, the reason for the decision, and a snapshot of the challenger config.
-A separate \texttt{champion\_history.json} records every accepted champion, and \texttt{differentiation\_summary.json} records the aggregate counts (accepted, safeguard rejections, no-improvement rejections) and the total API cost.
-This is sufficient for the Day 4 mutation-effectiveness analysis to be derived purely from logs.
+\section{Failure Modes and Tradeoffs}
 
-\textbf{Dry-run.}
-\texttt{scripts/run\_differentiation.py --dry-run} replaces real evaluation with a deterministic mock (vital signs pass at $90\%$, dev tasks pass uniformly at $50\%$) and disables the LLM-assisted mutations.
-This was used during Day 2 development to verify that all four iteration outcomes (acceptance, safeguard rejection, no-improvement rejection, convergence) are reachable without spending tokens.
+The first attempted benchmark was synthetic and was abandoned because standard
+direct prompting solved most tasks. That would have made any before/after claim
+uninformative. Moving to BugsInPy made the task harder and exposed more realistic
+failures: invalid JSON edits, syntactically invalid patches, patches that apply
+but preserve the wrong behavior, and failures where the localized line range is
+not enough context.
 
-\textbf{[TODO Day 3]}: Add the differentiation trajectory (Figure 1: champion dev score per iteration, with safeguard-trigger markers), iteration-to-convergence count, accepted-mutation tallies by operator, and final champion configuration summary.
+The main risk is complexity without measured gain. The implementation therefore
+keeps the search space bounded and logs every accepted or rejected mutation. If
+the stem agent does not beat \texttt{vanilla\_direct}, the correct conclusion is
+not that self-specialization works; it is that this bounded search did not find
+a better configuration within the budget.
 
-% =============================================================
-% DAY 3: Write Section 4 (Results)
-% =============================================================
+The second limitation is the fault-localization oracle. Showing candidate line
+ranges makes the task cheaper and isolates patch generation, but it also makes
+the setting easier than full real-world bug repair. A stronger follow-up would
+replace this with retrieval over the repository and score on a larger,
+multi-project BugsInPy or SWE-bench Lite subset.
 
-\section{Results}
+\section{What I Would Do Next}
 
-\subsection{Main Results}
-
-% Main comparison table: all agents x pass@1 x CI x cost x p-value
-% Interpretation
-
-\textbf{[TODO Day 3]}: Fill with test set results.
-
-\begin{table}[h]
-\centering
-\caption{Test set results (pass@1)}
-\begin{tabular}{lcccc}
-\toprule
-Agent & pass@1 & 95\% CI & Cost/task & $p$ (vs vanilla) \\
-\midrule
-\texttt{vanilla\_direct} & -- & -- & -- & -- \\
-\texttt{vanilla\_cot} & -- & -- & -- & -- \\
-\texttt{generic\_react} & -- & -- & -- & -- \\
-\texttt{hand\_tuned} & -- & -- & -- & -- \\
-\texttt{random\_search} & -- & -- & -- & -- \\
-\texttt{stem\_agent} & -- & -- & -- & -- \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Ablation Study}
-
-% Ablation table
-% Interpretation of each ablation
-
-\textbf{[TODO Day 3]}: Fill with ablation results.
-
-\subsection{External Harder Validation}
-
-% BugsInPy subset results: stem_agent vs vanilla
-% Interpretation
-
-\textbf{[TODO Day 3]}: Fill with the final BugsInPy subset results. Initial smoke tests confirmed that BugsInPy is usable locally: \texttt{youtube-dl} bug 2 checks out correctly, the buggy version fails its relevant test, and the fixed version passes. A first three-bug calibration subset (\texttt{youtube-dl}: bugs 1--3) was substantially harder than the synthetic benchmark: \texttt{gpt-4o-mini-2024-07-18}, \texttt{gpt-5.4-nano-2026-03-17}, and \texttt{gpt-5.4-mini-2026-03-17} each solved 0/3 with the minimal direct BugsInPy repair harness. This is only a smoke result, but it supports switching the final evaluation to a larger BugsInPy-backed subset.
-
-% =============================================================
-% DAY 4: Write Sections 5 + 6 + 7
-% =============================================================
-
-\section{Analysis and Discussion}
-
-\subsection{What Worked}
-
-% Most effective mutations
-% Categories that improved most
-% Role of the Sensor
-
-\textbf{[TODO Day 4]}
-
-\subsection{What Didn't Work}
-
-% Ineffective mutations
-% Resistant bug categories
-% Search space limitations
-
-\textbf{[TODO Day 4]}
-
-\subsection{The Safeguard in Practice}
-
-% Trigger count
-% What it prevented
-% Ablation evidence (no_safeguard variant)
-
-\textbf{[TODO Day 4]}
-
-\subsection{Surprises}
-
-% Unexpected findings
-
-\textbf{[TODO Day 4]}
-
-\section{Limitations and Future Work}
-\label{sec:limitations}
-
-% Be honest:
-% - Small benchmark (N=X)
-% - Model mismatch (mini for search, 4o for eval)
-% - Hand-designed mutation operators
-% - Single domain evaluation
-% - Cost of differentiation
-% Future:
-% - Learned mutations
-% - Multi-objective (perf + cost)
-% - Transfer between stem agents
-% - Larger benchmarks (full SWE-bench)
-
-\textbf{[TODO Day 4]}
+With more time I would expand beyond \texttt{youtube-dl}, run the full
+stem-agent search several times with different seeds, compare against
+\texttt{vanilla\_cot} and a hand-tuned baseline, and report per-category
+confidence intervals. I would also add a BugsInPy-aware verification tool for
+candidate JSON edits, because the current ReAct tools were originally written
+for the synthetic harness and are only partially useful on repository checkouts.
 
 \begin{thebibliography}{9}
 
-\bibitem{khattab2023dspy}
-Omar Khattab, Arnav Singhvi, Paridhi Maheshwari, Zhiyuan Zhang, Keshav Santhanam, Sri Vardhamanan, Saiful Haq, Ashutosh Sharma, Thomas T. Joshi, Hanna Moazam, Heather Miller, Matei Zaharia, and Christopher Potts.
-\newblock {DSPy}: Compiling Declarative Language Model Calls into Self-Improving Pipelines.
-\newblock \emph{arXiv preprint arXiv:2310.03714}, 2023.
-
-\bibitem{yang2023opro}
-Chengrun Yang, Xuezhi Wang, Yifeng Lu, Hanxiao Liu, Quoc V.\ Le, Denny Zhou, and Xinyun Chen.
-\newblock Large Language Models as Optimizers.
-\newblock \emph{arXiv preprint arXiv:2309.03409}, 2023.
-
-\bibitem{fernando2023promptbreeder}
-Chrisantha Fernando, Dylan Banarse, Henryk Michalewski, Simon Osindero, and Tim Rockt\"{a}schel.
-\newblock Promptbreeder: Self-Referential Self-Improvement via Prompt Evolution.
-\newblock \emph{arXiv preprint arXiv:2309.16797}, 2023.
-
-\bibitem{hu2024adas}
-Shengran Hu, Cong Lu, and Jeff Clune.
-\newblock Automated Design of Agentic Systems.
-\newblock \emph{arXiv preprint arXiv:2408.08435}, 2024.
+\bibitem{widyasari2020}
+Ratnadira Widyasari et al.
+\newblock BugsInPy: A database of existing bugs in Python programs to enable
+controlled testing and debugging studies.
+\newblock In \emph{Proceedings of ESEC/FSE}, 2020.
 
 \bibitem{jimenez2024swebench}
-Carlos E.\ Jim\'{e}nez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik Narasimhan.
-\newblock {SWE-bench}: Can Language Models Resolve Real-World {GitHub} Issues?
+Carlos E. Jimenez et al.
+\newblock SWE-bench: Can Language Models Resolve Real-World GitHub Issues?
 \newblock In \emph{Proceedings of ICLR}, 2024.
-
-\bibitem{widyasari2020}
-Ratnadira Widyasari, Sheng Qin Sim, Camellia Lok, Haodi Qi, Jack Phan, Qijin Tay, Constance Tan, Fiona Wee, Joanna Ethelda Tan, Yuheng Yieh, Brian Goh, Ferdian Thung, Hong Jin Kang, Thiago Syn Wee Soares, Foutse Khomh, and David Lo.
-\newblock {BugsInPy}: A database of existing bugs in {Python} programs to enable controlled testing and debugging studies.
-\newblock In \emph{Proceedings of ESEC/FSE}, pages 1556--1560, 2020.
 
 \end{thebibliography}
 

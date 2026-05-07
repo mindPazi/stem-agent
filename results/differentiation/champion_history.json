@@ -1,0 +1,19 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.125,
+    "config": {
+      "system_prompt": "You are an expert Python developer. Fix the bug in the provided code. Return only the corrected Python code, no explanation.",
+      "few_shot_examples": [],
+      "reasoning_instruction": "",
+      "output_format": "full_file",
+      "enabled_tools": [],
+      "tool_use_strategy": "never",
+      "approach": "direct",
+      "max_iterations": 1,
+      "temperature": 0.0,
+      "model": "gpt-5.4-mini-2026-03-17"
+    },
+    "timestamp": "2026-05-07T18:01:01.866427+00:00"
+  }
+]

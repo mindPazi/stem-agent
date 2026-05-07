@@ -1,0 +1,216 @@
+{
+  "baseline": "vanilla_direct_bugsinpy",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "bugs": [
+    "youtube-dl:1",
+    "youtube-dl:2",
+    "youtube-dl:3",
+    "youtube-dl:4",
+    "youtube-dl:5",
+    "youtube-dl:6",
+    "youtube-dl:7",
+    "youtube-dl:8",
+    "youtube-dl:9",
+    "youtube-dl:10",
+    "youtube-dl:11",
+    "youtube-dl:12",
+    "youtube-dl:13",
+    "youtube-dl:14",
+    "youtube-dl:15",
+    "youtube-dl:17",
+    "youtube-dl:18",
+    "youtube-dl:19",
+    "youtube-dl:20",
+    "youtube-dl:21",
+    "youtube-dl:22",
+    "youtube-dl:23",
+    "youtube-dl:24",
+    "youtube-dl:25",
+    "youtube-dl:26"
+  ],
+  "created_at": "2026-05-06T13:42:27.059444+00:00",
+  "results": {
+    "youtube-dl:1": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_match_str\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_match_str (test.test_utils.TestUtil.test_match_str)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-1-buggy/youtube-dl/test/test_utils.py\", line 1051, in test_match_str\n    self.assertTrue(match_str('x', {'x': 0}))\nAssertionError: False is not true\n\n----------------------------------------------------------------------\nRan 1 test in 0.006s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2577,\"end_line\":2578,\"replacement\":\"'': lambda v: v not in (None, False),\\n        '!': lambda v: v in (None, False),\"}]}",
+      "cost_usd": 0.000276,
+      "duration_s": 59.301
+    },
+    "youtube-dl:2": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_InfoExtractor.TestInfoExtractor.test_parse_mpd_formats\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_parse_mpd_formats (test.test_InfoExtractor.TestInfoExtractor.test_parse_mpd_formats)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-2-buggy/youtube-dl/test/test_InfoExtractor.py\", line 668, in test_parse_mpd_formats\n    expect_value(self, formats, expected_formats, None)\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-2-buggy/youtube-dl/test/helper.py\", line 137, in expect_value\n    self.assertEqual(\nAssertionError: 7 != 6 : Expect a list of length 7, but got a list of length 6 for field None\n\n----------------------------------------------------------------------\nRan 1 test in 0.089s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/extractor/common.py\",\"start_line\":2010,\"end_line\":2019,\"replacement\":\"                        try:\\n                            existing_format = next(\\n                                fo for fo in formats\\n                                if fo['format_id'] == representation_id)\\n                        except StopIteration:\\n                            full_info = formats_dict.get(representation_id, {}).copy()\\n                            full_info.update(f)\\n                            formats.append(full_info)\\n                        else:\\n                            existing_format.update(f)\\n                            if 'fragments' in f:\\n                                existing_format['fragments'] = f['fragments']\"}]}",
+      "cost_usd": 0.000349,
+      "duration_s": 59.582
+    },
+    "youtube-dl:3": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_unescape_html\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_unescape_html (test.test_utils.TestUtil.test_unescape_html)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-3-buggy/youtube-dl/test/test_utils.py\", line 278, in test_unescape_html\n    self.assertEqual(unescapeHTML('&#x2F;'), '/')\nAssertionError: '&#x2F' != '/'\n- &#x2F\n+ /\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.007s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":598,\"end_line\":599,\"replacement\":\"    return re.sub(\\n        r'&([^;]+;)', lambda m: _htmlentity_transform(m.group(1)) if m.group(1) in compat_html_entities_html5 else '&%s' % m.group(1)[:-1], s)\"}]}",
+      "cost_usd": 0.000274,
+      "duration_s": 58.908
+    },
+    "youtube-dl:4": {
+      "passed": true,
+      "test_output": "python -m unittest -q test.test_jsinterp.TestJSInterpreter.test_call\nRUN EVERY COMMAND\n0\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.004s\n\nOK",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/jsinterp.py\",\"start_line\":201,\"end_line\":206,\"replacement\":\"            r'^(?P<func>%s)\\\\((?P<args>[^)]*)\\\\)$' % _NAME_RE, expr)\\n        if m:\\n            fname = m.group('func')\\n            argvals = tuple([\\n                int(v) if v.isdigit() else local_vars[v]\\n                for v in m.group('args').split(',') if v])\"}]}",
+      "cost_usd": 0.000564,
+      "duration_s": 55.24
+    },
+    "youtube-dl:5": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_unified_timestamps\nRUN EVERY COMMAND\n0\n\n\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-5-buggy/youtube-dl/youtube_dl/utils.py:485: SyntaxWarning: invalid escape sequence '\\s'\n  path_part if path_part in ['.', '..'] else re.sub('(?:[/<>:\"\\\\|\\\\\\\\?\\\\*]|[\\s.]$)', '#', path_part)\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-5-buggy/youtube-dl/youtube_dl/utils.py:1147: SyntaxWarning: invalid escape sequence '\\d'\n  match = re.match('(now|today)(?P<sign>[+-])(?P<time>\\d+)(?P<unit>day|week|month|year)(s)?', date_str)\n======================================================================\nFAIL: test_unified_timestamps (test.test_utils.TestUtil.test_unified_timestamps)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-5-buggy/youtube-dl/test/test_utils.py\", line 311, in test_unified_timestamps\n    self.assertEqual(unified_timestamp('May 16, 2016 11:15 PM'), 1463440500)\nAssertionError: 1463397300 != 1463440500\n\n----------------------------------------------------------------------\nRan 1 test in 0.023s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":1118,\"end_line\":1118,\"replacement\":\"        return calendar.timegm(timetuple)\"}]}",
+      "cost_usd": 0.000667,
+      "duration_s": 59.865
+    },
+    "youtube-dl:6": {
+      "passed": true,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_parse_dfxp_time_expr\nRUN EVERY COMMAND\n0\n\n\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-6-buggy/youtube-dl/youtube_dl/utils.py:369: SyntaxWarning: invalid escape sequence '\\s'\n  path_part if path_part in ['.', '..'] else re.sub('(?:[/<>:\"\\\\|\\\\\\\\?\\\\*]|[\\s.]$)', '#', path_part)\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-6-buggy/youtube-dl/youtube_dl/utils.py:975: SyntaxWarning: invalid escape sequence '\\d'\n  match = re.match('(now|today)(?P<sign>[+-])(?P<time>\\d+)(?P<unit>day|week|month|year)(s)?', date_str)\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":1978,\"end_line\":1979,\"replacement\":\"    if not time_expr:\\n        return None\"}]}",
+      "cost_usd": 0.000689,
+      "duration_s": 56.202
+    },
+    "youtube-dl:7": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_js_to_json_realworld\nRUN EVERY COMMAND\n0\n\n\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/youtube_dl/utils.py:359: SyntaxWarning: invalid escape sequence '\\.'\n  path_part if path_part in ['.', '..'] else re.sub('(?:[/<>:\"\\\\|\\\\\\\\?\\\\*]|\\.$)', '#', path_part)\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/youtube_dl/utils.py:925: SyntaxWarning: invalid escape sequence '\\d'\n  match = re.match('(now|today)(?P<sign>[+-])(?P<time>\\d+)(?P<unit>day|week|month|year)(s)?', date_str)\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/usr/lib/python3.12/unittest/__main__.py\", line 18, in <module>\n    main(module=None)\n  File \"/usr/lib/python3.12/unittest/main.py\", line 104, in __init__\n    self.parseArgs(argv)\n  File \"/usr/lib/python3.12/unittest/main.py\", line 153, in parseArgs\n    self.createTests()\n  File \"/usr/lib/python3.12/unittest/main.py\", line 164, in createTests\n    self.test = self.testLoader.loadTestsFromNames(self.testNames,\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/unittest/loader.py\", line 207, in loadTestsFromNames\n    suites = [self.loadTestsFromName(name, module) for name in names]\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/unittest/loader.py\", line 137, in loadTestsFromName\n    module = __import__(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/test/test_utils.py\", line 18, in <module>\n    from youtube_dl.utils import (\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/youtube_dl/__init__.py\", line 15, in <module>\n    from .options import (\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/youtube_dl/options.py\", line 7, in <module>\n    from .downloader.external import list_external_downloaders\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/youtube_dl/downloader/__init__.py\", line 3, in <module>\n    from .common import FileDownloader\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/youtube_dl/downloader/common.py\", line 9, in <module>\n    from ..utils import (\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-7-buggy/youtube-dl/youtube_dl/utils.py\", line 1704\n    if v.startswith('\"'):\n    ^\nIndentationError: expected an indented block after 'if' statement on line 1703",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":1704,\"end_line\":1705,\"replacement\":\"        if v.startswith('\\\"'):\\n            return v\"}]}",
+      "cost_usd": 0.0005,
+      "duration_s": 50.308
+    },
+    "youtube-dl:8": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_YoutubeDL.TestFormatSelection.test_youtube_format_selection\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nERROR: test_youtube_format_selection (test.test_YoutubeDL.TestFormatSelection.test_youtube_format_selection)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-8-buggy/youtube-dl/test/test_YoutubeDL.py\", line 260, in test_youtube_format_selection\n    ydl.process_ie_result(info_dict)\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-8-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 713, in process_ie_result\n    return self.process_video_result(ie_result, download=download)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-8-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 1275, in process_video_result\n    format_selector = self.build_format_selector(req_format)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-8-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 1132, in build_format_selector\n    return _build_selector_function(parsed_selector)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-8-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 990, in _build_selector_function\n    fs = [_build_selector_function(s) for s in selector]\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-8-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 997, in _build_selector_function\n    elif selector.type == GROUP:\n         ^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'type'\n\n----------------------------------------------------------------------\nRan 1 test in 0.229s\n\nFAILED (errors=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":959,\"end_line\":962,\"replacement\":\"                        first_choice = current_selector\\n                        second_choice = _parse_format_selection(tokens, inside_choice=True)\\n                        if second_choice:\\n                            selectors.append(FormatSelector(PICKFIRST, (first_choice, second_choice), []))\\n                        else:\\n                            selectors.append(first_choice)\\n                        current_selector = None\"}]}",
+      "cost_usd": 0.000519,
+      "duration_s": 54.719
+    },
+    "youtube-dl:9": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_YoutubeDL.TestFormatSelection.test_youtube_format_selection\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nERROR: test_youtube_format_selection (test.test_YoutubeDL.TestFormatSelection.test_youtube_format_selection)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-9-buggy/youtube-dl/test/test_YoutubeDL.py\", line 252, in test_youtube_format_selection\n    ydl.process_ie_result(info_dict)\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-9-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 713, in process_ie_result\n    return self.process_video_result(ie_result, download=download)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-9-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 1270, in process_video_result\n    raise ExtractorError('requested format not available',\nyoutube_dl.utils.ExtractorError: requested format not available\n\n----------------------------------------------------------------------\nRan 1 test in 0.124s\n\nFAILED (errors=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":934,\"end_line\":934,\"replacement\":\"        def _parse_format_selection(tokens, endwith=None):\"},{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":944,\"end_line\":944,\"replacement\":\"                    if string in (endwith or []):\"},{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":946,\"end_line\":947,\"replacement\":\"                    elif string == ')':\\n                        # ')' will be handled by the parentheses group\"},{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":950,\"end_line\":950,\"replacement\":\"                    if string == ',':\"},{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":955,\"end_line\":955,\"replacement\":\"                        second_choice = _parse_format_selection(tokens, [','])\"},{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":966,\"end_line\":966,\"replacement\":\"                        current_selector = FormatSelector(GROUP, _parse_format_selection(tokens, [')']), [])\"},{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":969,\"end_line\":971,\"replacement\":\"                        audio_selector = _parse_format_selection(tokens, [','])\\n                        current_selector = None\\n                        selectors.append(FormatSelector(MERGE, (video_selector, audio_selector), []))\"}]}",
+      "cost_usd": 0.000986,
+      "duration_s": 53.757
+    },
+    "youtube-dl:10": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_js_to_json_realworld\nRUN EVERY COMMAND\n0\n\n\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-10-buggy/youtube-dl/youtube_dl/utils.py:785: SyntaxWarning: invalid escape sequence '\\d'\n  match = re.match('(now|today)(?P<sign>[+-])(?P<time>\\d+)(?P<unit>day|week|month|year)(s)?', date_str)\n======================================================================\nERROR: test_js_to_json_realworld (test.test_utils.TestUtil.test_js_to_json_realworld)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-10-buggy/youtube-dl/test/test_utils.py\", line 375, in test_js_to_json_realworld\n    self.assertEqual(json.loads(json_code), json.loads(inp))\n                     ^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/decoder.py\", line 340, in decode\n    raise JSONDecodeError(\"Extra data\", s, end)\njson.decoder.JSONDecodeError: Extra data: line 1 column 3 (char 2)\n\n----------------------------------------------------------------------\nRan 1 test in 41.980s\n\nFAILED (errors=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":1563,\"end_line\":1564,\"replacement\":\"        \\\"(?:[^\\\"\\\\\\\\]*(?:\\\\\\\\\\\\\\\\|\\\\\\\\\\\")?)*\\\"|\\n        '(?:[^'\\\\\\\\]*(?:\\\\\\\\\\\\\\\\|\\\\\\\\')?)*'|\"}]}",
+      "cost_usd": 0.00051,
+      "duration_s": 100.913
+    },
+    "youtube-dl:11": {
+      "passed": true,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_str_to_int\nRUN EVERY COMMAND\n0\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":3522,\"end_line\":3525,\"replacement\":\"    if int_str is None:\\n        return None\\n    if not isinstance(int_str, compat_str):\\n        int_str = compat_str(int_str)\\n    int_str = re.sub(r'[,.\\\\+]', '', int_str)\\n    return int(int_str)\"}]}",
+      "cost_usd": 0.000265,
+      "duration_s": 54.638
+    },
+    "youtube-dl:12": {
+      "passed": true,
+      "test_output": "python -m unittest -q test.test_YoutubeDL.TestFormatSelection.test_format_selection_string_ops\nRUN EVERY COMMAND\n0\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.846s\n\nOK",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":1081,\"end_line\":1081,\"replacement\":\"                    op = lambda attr, value: not str_op(attr, value)\"}]}",
+      "cost_usd": 0.000284,
+      "duration_s": 58.432
+    },
+    "youtube-dl:13": {
+      "passed": true,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_urljoin\nRUN EVERY COMMAND\n0\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":1866,\"end_line\":1878,\"replacement\":\"def urljoin(base, path):\\n    if isinstance(path, bytes):\\n        path = path.decode('utf-8')\\n    if not isinstance(path, compat_str) or not path:\\n        return None\\n    if re.match(r'^(?:https?:)?//', path):\\n        return path\\n    if isinstance(base, bytes):\\n        base = base.decode('utf-8')\\n    if not isinstance(base, compat_str) or not re.match(\\n            r'^(?:https?:)?//', base):\\n        return path if base is None else None\\n    return compat_urlparse.urljoin(base, path)\"}]}",
+      "cost_usd": 0.000306,
+      "duration_s": 56.19
+    },
+    "youtube-dl:14": {
+      "passed": true,
+      "test_output": "python -m unittest -q test.test_youtube_chapters.TestYoutubeChapters.test_youtube_chapters\nRUN EVERY COMMAND\n0\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.003s\n\nOK",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/extractor/youtube.py\",\"start_line\":1656,\"end_line\":1656,\"replacement\":\"    def _extract_chapters_from_description(description, duration):\"},{\"file\":\"youtube_dl/extractor/youtube.py\",\"start_line\":2327,\"end_line\":2327,\"replacement\":\"        chapters = self._extract_chapters_from_description(description_original, video_duration)\"}]}",
+      "cost_usd": 0.000638,
+      "duration_s": 59.352
+    },
+    "youtube-dl:15": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_js_to_json_edgecases test.test_utils.TestUtil.test_js_to_json_realworld\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nERROR: test_js_to_json_edgecases (test.test_utils.TestUtil.test_js_to_json_edgecases)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-15-buggy/youtube-dl/test/test_utils.py\", line 892, in test_js_to_json_edgecases\n    self.assertEqual(json.loads(on), {'42': 42.0})\n                     ^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/decoder.py\", line 337, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/decoder.py\", line 353, in raw_decode\n    obj, end = self.scan_once(s, idx)\n               ^^^^^^^^^^^^^^^^^^^^^^\njson.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 10 (char 9)\n\n======================================================================\nFAIL: test_js_to_json_realworld (test.test_utils.TestUtil.test_js_to_json_realworld)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-15-buggy/youtube-dl/test/test_utils.py\", line 818, in test_js_to_json_realworld\n    self.assertEqual(js_to_json(inp), '''{\"segments\": [{\"offset\":-3.885780586188048e-16,\"duration\":39.75000000000001}]}''')\nAssertionError: '{\"se[14 chars]fset\":-3.885780586188048\"e\"-16,\"duration\":39.75000000000001}]}' != '{\"se[14 chars]fset\":-3.885780586188048e-16,\"duration\":39.75000000000001}]}'\n- {\"segments\": [{\"offset\":-3.885780586188048\"e\"-16,\"duration\":39.75000000000001}]}\n?                                           - -\n+ {\"segments\": [{\"offset\":-3.885780586188048e-16,\"duration\":39.75000000000001}]}\n\n\n----------------------------------------------------------------------\nRan 2 tests in 0.011s\n\nFAILED (failures=1, errors=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2266,\"end_line\":2273,\"replacement\":\"    return re.sub(r'''(?sx)\\n        \\\"(?:[^\\\"\\\\\\\\]*(?:\\\\\\\\\\\\\\\\|\\\\\\\\['\\\"nurtbfx/\\\\n]))*[^\\\"\\\\\\\\]*\\\"|\\n        '(?:[^'\\\\\\\\]*(?:\\\\\\\\\\\\\\\\|\\\\\\\\['\\\"nurtbfx/\\\\n]))*[^'\\\\\\\\]*'|\\n        {comment}|,(?={skip}[\\\\]}}])|\\n        [a-zA-Z_][.a-zA-Z_0-9]*|\\n        \\\\b(?:0[xX][0-9a-fA-F]+|0+[0-7]+)(?:{skip}:)?|\\n        [0-9]+(?:\\\\.[0-9]+)?(?={skip}:)\\n        '''.format(comment=COMMENT_RE, skip=SKIP_RE), fix_kv, code)\"}]}",
+      "cost_usd": 0.000431,
+      "duration_s": 62.706
+    },
+    "youtube-dl:17": {
+      "passed": true,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_cli_bool_option\nRUN EVERY COMMAND\n0\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2734,\"end_line\":2739,\"replacement\":\"def cli_bool_option(params, command_option, param, true_value='true', false_value='false', separator=None):\\n    param = params.get(param)\\n    if param is None:\\n        return []\\n    if separator:\\n        return [command_option + separator + (true_value if param else false_value)]\\n    return [command_option, true_value if param else false_value]\"}]}",
+      "cost_usd": 0.000288,
+      "duration_s": 53.963
+    },
+    "youtube-dl:18": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_YoutubeDL.TestYoutubeDL.test_do_not_override_ie_key_in_url_transparent\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nERROR: test_do_not_override_ie_key_in_url_transparent (test.test_YoutubeDL.TestYoutubeDL.test_do_not_override_ie_key_in_url_transparent)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-18-buggy/youtube-dl/test/test_YoutubeDL.py\", line 788, in test_do_not_override_ie_key_in_url_transparent\n    ydl.extract_info('foo1:')\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-18-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 787, in extract_info\n    return self.process_ie_result(ie_result, download, extra_info)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-18-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 878, in process_ie_result\n    return self.process_ie_result(\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-18-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 851, in process_ie_result\n    info = self.extract_info(\n           ^^^^^^^^^^^^^^^^^^\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-18-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 810, in extract_info\n    self.report_error('no suitable InfoExtractor for URL %s' % url)\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-18-buggy/youtube-dl/youtube_dl/YoutubeDL.py\", line 604, in report_error\n    self.trouble(error_message, tb)\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-18-buggy/youtube-dl/test/helper.py\", line 75, in trouble\n    raise Exception(s)\nException: ERROR: no suitable InfoExtractor for URL foo3:\n\n----------------------------------------------------------------------\nRan 1 test in 0.125s\n\nFAILED (errors=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":863,\"end_line\":863,\"replacement\":\"            for f in ('_type', 'url'):\"}]}",
+      "cost_usd": 0.000261,
+      "duration_s": 55.081
+    },
+    "youtube-dl:19": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_YoutubeDL.TestYoutubeDL.test_prepare_filename\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_prepare_filename (test.test_YoutubeDL.TestYoutubeDL.test_prepare_filename)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-19-buggy/youtube-dl/test/test_YoutubeDL.py\", line 556, in test_prepare_filename\n    self.assertEqual(fname('Hello %(title1)s'), 'Hello $PATH')\nAssertionError: 'Hello /mnt/c/tmp/bugsinpy-model-calibration-wor[1538 chars]/bin' != 'Hello $PATH'\nDiff is 1607 characters long. Set self.maxDiff to None to see it.\n\n----------------------------------------------------------------------\nRan 1 test in 1.047s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/YoutubeDL.py\",\"start_line\":677,\"end_line\":677,\"replacement\":\"            filename = sanitize_path(expand_path(outtmpl % template_dict))\"}]}",
+      "cost_usd": 0.000377,
+      "duration_s": 60.812
+    },
+    "youtube-dl:20": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_get_element_by_attribute\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_get_element_by_attribute (test.test_utils.TestUtil.test_get_element_by_attribute)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-20-buggy/youtube-dl/test/test_utils.py\", line 1235, in test_get_element_by_attribute\n    self.assertEqual(get_element_by_attribute('itemprop', 'author', html), 'foo')\nAssertionError: None != 'foo'\n\n----------------------------------------------------------------------\nRan 1 test in 0.009s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":368,\"end_line\":370,\"replacement\":\"         (?:\\\\s+[a-zA-Z0-9:._-]+(?:=[a-zA-Z0-9:._-]*|=\\\"[^\\\"]*\\\"|='[^']*'))*?\\n         \\\\s+%s=(?:['\\\"]?%s['\\\"]?|[^\\\\s>]+)\\n         (?:\\\\s+[a-zA-Z0-9:._-]+(?:=[a-zA-Z0-9:._-]*|=\\\"[^\\\"]*\\\"|='[^']*'))*?\"}]}",
+      "cost_usd": 0.000335,
+      "duration_s": 53.579
+    },
+    "youtube-dl:21": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_urljoin\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nFAIL: test_urljoin (test.test_utils.TestUtil.test_urljoin)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-21-buggy/youtube-dl/test/test_utils.py\", line 458, in test_urljoin\n    self.assertEqual(urljoin(b'http://foo.de/', '/a/b/c.txt'), 'http://foo.de/a/b/c.txt')\nAssertionError: None != 'http://foo.de/a/b/c.txt'\n\n----------------------------------------------------------------------\nRan 1 test in 0.005s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":1755,\"end_line\":1755,\"replacement\":\"    if not isinstance(base, compat_str):\\n        base = compat_str(base)\\n    if not re.match(r'^(?:https?:)?//', base):\"}]}",
+      "cost_usd": 0.000244,
+      "duration_s": 56.283
+    },
+    "youtube-dl:22": {
+      "passed": false,
+      "error": "edit_apply_failed",
+      "apply_error": "JSON parse failed: Invalid \\escape: line 1 column 128 (char 127)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2381,\"end_line\":2434,\"replacement\":\"    operator_rex = re.compile(r'''(?x)\\s*\\n        (?P<key>[a-z_]+)\\n        \\s*(?P<op>%s)(?P<none_inclusive>\\s*\\?)?\\s*\\n        (?:\\n            (?P<intval>[0-9.]+(?:[kKmMgGtTpPeEzZyY]i?[Bb]?)?)|\\n            (?P<strval>(?![0-9.])[a-z0-9A-Z\\\\s\\\\u0080-\\\\uffff]*)\\n        )\\n        \\s*$\\n        ''' % '|'.join(map(re.escape, COMPARISON_OPERATORS.keys())))\\n    m = operator_rex.search(filter_part)\\n    if m:\\n        op = COMPARISON_OPERATORS[m.group('op')]\\n        actual_value = dct.get(m.group('key'))\\n        if (m.group('strval') is not None or\\n            # If the original field is a string and matching comparisonvalue is\\n            # a number we should respect the origin of the original field\\n            # and process comparison value as a string (see\\n            # https://github.com/rg3/youtube-dl/issues/11082).\\n            actual_value is not None and m.group('intval') is not None and\\n                isinstance(actual_value, compat_str)):\\n            if m.group('op') not in ('=', '!='):\\n                raise ValueError(\\n                    'Operator %s does not support string values!' % m.group('op'))\\n            comparison_value = m.group('strval') or m.group('intval')\\n        else:\\n            try:\\n                comparison_value = int(m.group('intval'))\\n            except ValueError:\\n                comparison_value = parse_filesize(m.group('intval'))\\n                if comparison_value is None:\\n                    comparison_value = parse_filesize(m.group('intval') + 'B')\\n                if comparison_value is None:\\n                    raise ValueError(\\n                        'Invalid integer value %r in filter part %r' % (\\n                            m.group('intval'), filter_part))\\n        if actual_value is None:\\n            return m.group('none_inclusive')\\n        return op(actual_value, comparison_value)\\n\\n    UNARY_OPERATORS = {\\n        '': lambda v: v is not None,\\n        '!': lambda v: v is None,\\n    }\\n    operator_rex = re.compile(r'''(?x)\\s*\\n        (?P<op>%s)\\s*(?P<key>[a-z_]+)\\n        \\s*$\\n        ''' % '|'.join(map(re.escape, UNARY_OPERATORS.keys())))\\n    m = operator_rex.search(filter_part)\\n    if m:\\n        op = UNARY_OPERATORS[m.group('op')]\\n        actual_value = dct.get(m.group('key'))\\n        return op(actual_value)\\n\\n    raise ValueError('Invalid filter part %r' % filter_part)\"}]}",
+      "cost_usd": 0.001147,
+      "duration_s": 3.978
+    },
+    "youtube-dl:23": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_js_to_json_edgecases\nRUN EVERY COMMAND\n0\n\n\n======================================================================\nERROR: test_js_to_json_edgecases (test.test_utils.TestUtil.test_js_to_json_edgecases)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-23-buggy/youtube-dl/test/test_utils.py\", line 795, in test_js_to_json_edgecases\n    self.assertEqual(json.loads(on), {'0': 1})\n                     ^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/decoder.py\", line 337, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/json/decoder.py\", line 353, in raw_decode\n    obj, end = self.scan_once(s, idx)\n               ^^^^^^^^^^^^^^^^^^^^^^\njson.decoder.JSONDecodeError: Expecting ',' delimiter: line 2 column 1 (char 20)\n\n----------------------------------------------------------------------\nRan 1 test in 0.009s\n\nFAILED (errors=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2137,\"end_line\":2137,\"replacement\":\"        /\\\\*.*?\\\\*/|//[^\\\\n]*|,(?=\\\\s*[\\\\]}])|\"}]}",
+      "cost_usd": 0.000448,
+      "duration_s": 56.07
+    },
+    "youtube-dl:24": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_YoutubeDL.TestYoutubeDL.test_match_filter\nRUN EVERY COMMAND\n0\n\n\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-24-buggy/youtube-dl/youtube_dl/utils.py:499: SyntaxWarning: invalid escape sequence '\\s'\n  path_part if path_part in ['.', '..'] else re.sub('(?:[/<>:\"\\\\|\\\\\\\\?\\\\*]|[\\s.]$)', '#', path_part)\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-24-buggy/youtube-dl/youtube_dl/utils.py:1181: SyntaxWarning: invalid escape sequence '\\d'\n  match = re.match('(now|today)(?P<sign>[+-])(?P<time>\\d+)(?P<unit>day|week|month|year)(s)?', date_str)\n======================================================================\nFAIL: test_match_filter (test.test_YoutubeDL.TestYoutubeDL.test_match_filter)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-24-buggy/youtube-dl/test/test_YoutubeDL.py\", line 657, in test_match_filter\n    self.assertEqual(res, ['1'])\nAssertionError: Lists differ: [] != ['1']\n\nSecond list contains 1 additional elements.\nFirst extra element 0:\n'1'\n\n- []\n+ ['1']\n\n----------------------------------------------------------------------\nRan 1 test in 0.568s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2348,\"end_line\":2348,\"replacement\":\"        if m.group('strval') is not None:\\n            if m.group('op') not in ('=', '!='):\\n                raise ValueError(\\n                    'Operator %s does not support string values!' % m.group('op'))\\n            comparison_value = m.group('strval').lower()\"},{\"file\":\"youtube_dl/utils.py\",\"start_line\":2364,\"end_line\":2364,\"replacement\":\"        actual_value = dct.get(m.group('key'))\\n        if isinstance(actual_value, compat_str):\\n            actual_value = actual_value.lower()\"}]}",
+      "cost_usd": 0.00075,
+      "duration_s": 57.13
+    },
+    "youtube-dl:25": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_js_to_json_realworld\nRUN EVERY COMMAND\n0\n\n\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-25-buggy/youtube-dl/youtube_dl/utils.py:487: SyntaxWarning: invalid escape sequence '\\s'\n  path_part if path_part in ['.', '..'] else re.sub('(?:[/<>:\"\\\\|\\\\\\\\?\\\\*]|[\\s.]$)', '#', path_part)\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-25-buggy/youtube-dl/youtube_dl/utils.py:1149: SyntaxWarning: invalid escape sequence '\\d'\n  match = re.match('(now|today)(?P<sign>[+-])(?P<time>\\d+)(?P<unit>day|week|month|year)(s)?', date_str)\n======================================================================\nFAIL: test_js_to_json_realworld (test.test_utils.TestUtil.test_js_to_json_realworld)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-25-buggy/youtube-dl/test/test_utils.py\", line 716, in test_js_to_json_realworld\n    self.assertEqual(js_to_json(inp), '''{\"duration\": \"00:01:07\"}''')\nAssertionError: '{\"duration\": 0}' != '{\"duration\": \"00:01:07\"}'\n- {\"duration\": 0}\n+ {\"duration\": \"00:01:07\"}\n?              + ++++++++\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.009s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":2041,\"end_line\":2042,\"replacement\":\"            (r'^0[xX][0-9a-fA-F]+', 16),\\n            (r'^0+[0-7]+(?=\\\\D|$)', 8),\"},{\"file\":\"youtube_dl/utils.py\",\"start_line\":2048,\"end_line\":2048,\"replacement\":\"                i = int(im.group(0), base)\"}]}",
+      "cost_usd": 0.000558,
+      "duration_s": 63.284
+    },
+    "youtube-dl:26": {
+      "passed": false,
+      "test_output": "python -m unittest -q test.test_utils.TestUtil.test_js_to_json_realworld\nRUN EVERY COMMAND\n0\n\n\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-26-buggy/youtube-dl/youtube_dl/utils.py:434: SyntaxWarning: invalid escape sequence '\\s'\n  path_part if path_part in ['.', '..'] else re.sub('(?:[/<>:\"\\\\|\\\\\\\\?\\\\*]|[\\s.]$)', '#', path_part)\n/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-26-buggy/youtube-dl/youtube_dl/utils.py:1105: SyntaxWarning: invalid escape sequence '\\d'\n  match = re.match('(now|today)(?P<sign>[+-])(?P<time>\\d+)(?P<unit>day|week|month|year)(s)?', date_str)\n======================================================================\nFAIL: test_js_to_json_realworld (test.test_utils.TestUtil.test_js_to_json_realworld)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/mnt/c/tmp/bugsinpy-model-calibration-workspace/gpt-5.4-mini-2026-03-17/youtube-dl-26-buggy/youtube-dl/test/test_utils.py\", line 638, in test_js_to_json_realworld\n    self.assertEqual(js_to_json(inp), '''{\nAssertionError: '{\\n            0:{\"src\":\"skipped\", \"type\": \"application/[92 chars]   }' != '{\\n            \"0\":{\"src\":\"skipped\", \"type\": \"applicatio[96 chars]   }'\n  {\n-             0:{\"src\":\"skipped\", \"type\": \"application/dash+xml\"},\n+             \"0\":{\"src\":\"skipped\", \"type\": \"application/dash+xml\"},\n?             + +\n-             1:{\"src\":\"skipped\", \"type\": \"application/vnd.apple.mpegURL\"}\n+             \"1\":{\"src\":\"skipped\", \"type\": \"application/vnd.apple.mpegURL\"}\n?             + +\n          }\n\n\n----------------------------------------------------------------------\nRan 1 test in 0.004s\n\nFAILED (failures=1)",
+      "raw_fix": "{\"edits\":[{\"file\":\"youtube_dl/utils.py\",\"start_line\":1973,\"end_line\":1973,\"replacement\":\"        (?:0[xX][0-9a-fA-F]+|0+[0-7]+|[0-9]+)(?:\\\\s*:)?\"}]}",
+      "cost_usd": 0.000515,
+      "duration_s": 28.75
+    }
+  },
+  "n_total": 25,
+  "n_passed": 7,
+  "pass_at_1": 0.28,
+  "updated_at": "2026-05-06T14:45:41.814256+00:00",
+  "completed_at": "2026-05-06T14:45:41.814256+00:00",
+  "total_cost_usd": 0.01218
+}

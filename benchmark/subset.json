@@ -1,0 +1,210 @@
+[
+  {
+    "project": "youtube-dl",
+    "bug_id": 1,
+    "task_id": "youtube-dl:1",
+    "category": "missing_check",
+    "difficulty": "medium",
+    "lines_changed": 6
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 2,
+    "task_id": "youtube-dl:2",
+    "category": "missing_check",
+    "difficulty": "hard",
+    "lines_changed": 20
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 3,
+    "task_id": "youtube-dl:3",
+    "category": "wrong_variable",
+    "difficulty": "easy",
+    "lines_changed": 4
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 4,
+    "task_id": "youtube-dl:4",
+    "category": "type_error",
+    "difficulty": "medium",
+    "lines_changed": 6
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 5,
+    "task_id": "youtube-dl:5",
+    "category": "missing_check",
+    "difficulty": "medium",
+    "lines_changed": 8
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 6,
+    "task_id": "youtube-dl:6",
+    "category": "logic_error",
+    "difficulty": "hard",
+    "lines_changed": 13
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 7,
+    "task_id": "youtube-dl:7",
+    "category": "wrong_variable",
+    "difficulty": "medium",
+    "lines_changed": 6
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 8,
+    "task_id": "youtube-dl:8",
+    "category": "wrong_variable",
+    "difficulty": "medium",
+    "lines_changed": 5
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 9,
+    "task_id": "youtube-dl:9",
+    "category": "missing_check",
+    "difficulty": "hard",
+    "lines_changed": 27
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 10,
+    "task_id": "youtube-dl:10",
+    "category": "other",
+    "difficulty": "medium",
+    "lines_changed": 6
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 11,
+    "task_id": "youtube-dl:11",
+    "category": "wrong_variable",
+    "difficulty": "medium",
+    "lines_changed": 6
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 12,
+    "task_id": "youtube-dl:12",
+    "category": "wrong_variable",
+    "difficulty": "easy",
+    "lines_changed": 4
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 13,
+    "task_id": "youtube-dl:13",
+    "category": "wrong_variable",
+    "difficulty": "easy",
+    "lines_changed": 4
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 14,
+    "task_id": "youtube-dl:14",
+    "category": "other",
+    "difficulty": "hard",
+    "lines_changed": 65
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 15,
+    "task_id": "youtube-dl:15",
+    "category": "other",
+    "difficulty": "easy",
+    "lines_changed": 4
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 16,
+    "task_id": "youtube-dl:16",
+    "category": "type_error",
+    "difficulty": "hard",
+    "lines_changed": 24
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 17,
+    "task_id": "youtube-dl:17",
+    "category": "other",
+    "difficulty": "easy",
+    "lines_changed": 4
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 18,
+    "task_id": "youtube-dl:18",
+    "category": "wrong_variable",
+    "difficulty": "easy",
+    "lines_changed": 4
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 19,
+    "task_id": "youtube-dl:19",
+    "category": "wrong_variable",
+    "difficulty": "hard",
+    "lines_changed": 17
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 20,
+    "task_id": "youtube-dl:20",
+    "category": "other",
+    "difficulty": "medium",
+    "lines_changed": 6
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 21,
+    "task_id": "youtube-dl:21",
+    "category": "wrong_variable",
+    "difficulty": "medium",
+    "lines_changed": 9
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 22,
+    "task_id": "youtube-dl:22",
+    "category": "missing_check",
+    "difficulty": "medium",
+    "lines_changed": 11
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 23,
+    "task_id": "youtube-dl:23",
+    "category": "missing_check",
+    "difficulty": "medium",
+    "lines_changed": 6
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 24,
+    "task_id": "youtube-dl:24",
+    "category": "missing_check",
+    "difficulty": "hard",
+    "lines_changed": 14
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 25,
+    "task_id": "youtube-dl:25",
+    "category": "off_by_one",
+    "difficulty": "medium",
+    "lines_changed": 8
+  },
+  {
+    "project": "youtube-dl",
+    "bug_id": 26,
+    "task_id": "youtube-dl:26",
+    "category": "other",
+    "difficulty": "easy",
+    "lines_changed": 4
+  }
+]

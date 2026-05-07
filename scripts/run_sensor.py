@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run the Sensor on calibration results to extract failure signals.
+Run the Sensor on BugsInPy calibration results to extract failure signals.
 
 Prerequisites
 -------------
@@ -18,33 +18,90 @@ import logging
 import os
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from src.bugsinpy_loader import (
+    DEFAULT_BUGSINPY_ROOT,
+    DEFAULT_CACHE_ROOT,
+    DEFAULT_WORKSPACE_ROOT,
+    load_bugsinpy_task,
+)
 from src.config import DEFAULT_MODEL
-from src.evaluator import load_tasks_from_dir
 from src.llm_client import LLMClient
-from src.sensor import Sensor
+from src.sensor import Sensor, SensorReport
 from src.utils import load_env_file, load_json, setup_logging
 
 logger = logging.getLogger(__name__)
 
 
+def _heuristic_sensor_report(calib_tasks, calib_passed: dict[str, bool]) -> SensorReport:
+    category_counts: dict[str, int] = {}
+    category_pass: dict[str, list[bool]] = {}
+    failure_patterns: list[str] = []
+
+    for task in calib_tasks:
+        category = task.category or "other"
+        passed = calib_passed.get(task.task_id, False)
+        category_counts[category] = category_counts.get(category, 0) + 1
+        category_pass.setdefault(category, []).append(passed)
+        if passed:
+            continue
+        output = getattr(task, "test_output", "")
+        if "JSON parse failed" in output:
+            pattern = "agent produced invalid JSON edits"
+        elif "SyntaxError" in output or "IndentationError" in output:
+            pattern = "agent produced syntactically invalid patch"
+        elif "AssertionError" in output:
+            pattern = "agent patch applied but preserved wrong behavior"
+        elif "Traceback" in output:
+            pattern = "agent patch still raises an exception"
+        else:
+            pattern = "agent failed without a specific traceback signal"
+        if pattern not in failure_patterns:
+            failure_patterns.append(pattern)
+
+    category_performance = {
+        category: sum(values) / len(values)
+        for category, values in category_pass.items()
+    }
+    worst_categories = sorted(category_performance, key=category_performance.get)[:2]
+    suggested = ["add_constraint", "specialize_for_category"]
+    if any(category in {"missing_check", "off_by_one", "wrong_variable"} for category in worst_categories):
+        suggested.append("switch_approach")
+
+    return SensorReport(
+        category_counts=category_counts,
+        category_performance=category_performance,
+        failure_patterns=failure_patterns,
+        success_patterns=["direct fixes work when traceback and candidate line range are precise"],
+        suggested_mutations=suggested,
+        reference_fixes_used=False,
+    )
+
+
 def main() -> None:
     load_env_file()
 
-    parser = argparse.ArgumentParser(description="Run Sensor analysis on the calibration split")
+    parser = argparse.ArgumentParser(description="Run Sensor on BugsInPy calibration split")
     parser.add_argument("--api-key", default=os.getenv("OPENAI_API_KEY"))
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="LLM for sensor analysis")
+    parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--splits-path", default="benchmark/splits.json")
+    parser.add_argument("--subset-path", default="benchmark/subset.json")
     parser.add_argument("--baselines-dir", default="results/baselines")
     parser.add_argument("--output", default="results/sensor/sensor_report.json")
-    parser.add_argument("--benchmark-dir", default="benchmark/tasks")
+    parser.add_argument("--bugsinpy-root", default=str(DEFAULT_BUGSINPY_ROOT))
+    parser.add_argument(
+        "--heuristic",
+        action="store_true",
+        help="Build the sensor report without LLM calls; useful for the one-day pilot run.",
+    )
     args = parser.parse_args()
 
     setup_logging()
 
-    if not args.api_key:
+    if not args.api_key and not args.heuristic:
         sys.exit("ERROR: set OPENAI_API_KEY or pass --api-key")
 
     splits_path = Path(args.splits_path)
@@ -67,14 +124,38 @@ def main() -> None:
         if tid in calib_ids
     }
     calib_fixes: dict[str, str] = {
-        tid: info.get("fix", "")
+        tid: info.get("raw_fix", info.get("fix", ""))
         for tid, info in vanilla_results_raw.items()
         if tid in calib_ids
     }
 
-    all_tasks = load_tasks_from_dir(args.benchmark_dir)
-    task_map = {task.task_id: task for task in all_tasks}
-    calib_tasks = [task_map[tid] for tid in splits["calibration"] if tid in task_map]
+    calib_tasks = []
+    if args.heuristic:
+        subset = {
+            item["task_id"]: item
+            for item in load_json(Path(args.subset_path))
+        }
+        for tid in splits["calibration"]:
+            meta = subset.get(tid, {})
+            calib_tasks.append(SimpleNamespace(
+                task_id=tid,
+                category=meta.get("category", "other"),
+                description=f"BugsInPy {tid}",
+                test_output=vanilla_results_raw.get(tid, {}).get("test_output", ""),
+            ))
+    else:
+        bugsinpy_root = Path(args.bugsinpy_root)
+        for tid in splits["calibration"]:
+            project, bug_id = tid.split(":", 1)
+            try:
+                task = load_bugsinpy_task(
+                    project, bug_id, bugsinpy_root,
+                    DEFAULT_WORKSPACE_ROOT, DEFAULT_CACHE_ROOT,
+                )
+                task.test_output = vanilla_results_raw.get(tid, {}).get("test_output", "")
+                calib_tasks.append(task)
+            except Exception as exc:
+                logger.warning("Failed to load %s: %s", tid, exc)
 
     logger.info(
         "Sensor: %d calibration tasks loaded. pass@1 on calibration: %.3f",
@@ -82,14 +163,17 @@ def main() -> None:
         sum(calib_passed.values()) / len(calib_passed) if calib_passed else 0.0,
     )
 
-    llm = LLMClient(api_key=args.api_key, default_model=args.model)
-    sensor = Sensor(llm_client=llm)
-
-    report = sensor.analyze(
-        calibration_tasks=calib_tasks,
-        results=calib_passed,
-        agent_fixes=calib_fixes,
-    )
+    if args.heuristic:
+        report = _heuristic_sensor_report(calib_tasks, calib_passed)
+        llm = None
+    else:
+        llm = LLMClient(api_key=args.api_key, default_model=args.model)
+        sensor = Sensor(llm_client=llm)
+        report = sensor.analyze(
+            calibration_tasks=calib_tasks,
+            results=calib_passed,
+            agent_fixes=calib_fixes,
+        )
 
     output_path = Path(args.output)
     report.save(output_path)
@@ -109,7 +193,7 @@ def main() -> None:
     logger.info("Success patterns    : %s", report.success_patterns)
     logger.info("Suggested mutations : %s", report.suggested_mutations)
     logger.info("Saved to %s", output_path)
-    logger.info("Total API cost: $%.4f", llm.get_total_cost())
+    logger.info("Total API cost: $%.4f", llm.get_total_cost() if llm else 0.0)
 
 
 if __name__ == "__main__":

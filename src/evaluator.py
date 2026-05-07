@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +13,8 @@ from pathlib import Path
 from .agent import AgentResult, BugFixAgent, Task
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_BUGSINPY_ROOT = Path("C:/tmp/BugsInPy")
 
 
 @dataclass
@@ -62,10 +66,66 @@ def run_tests_safely(task_dir: str, agent_fix: str, timeout: int = 30) -> TestRe
             return TestResult(passed=False, stdout="", stderr=str(e), duration_s=0.0)
 
 
+def _run_tests_bugsinpy(task: Task, agent_fix: str) -> TestResult:
+    """Apply JSON edits and run BugsInPy tests via WSL."""
+    from .bugsinpy_runner import evaluate_bugsinpy_fix
+
+    repo_dir = getattr(task, "repo_dir", task.task_dir)
+    t0 = time.perf_counter()
+    result = evaluate_bugsinpy_fix(
+        bugsinpy_root=DEFAULT_BUGSINPY_ROOT,
+        repo_dir=Path(repo_dir),
+        raw_fix=agent_fix,
+        timeout=300,
+    )
+    duration = time.perf_counter() - t0
+    return TestResult(
+        passed=result.get("passed", False),
+        stdout=result.get("test_output", ""),
+        stderr=result.get("apply_error", ""),
+        duration_s=duration,
+    )
+
+
+def _recheckout_bugsinpy_task(task: Task) -> None:
+    """Re-checkout the buggy version so edits from a prior agent don't persist."""
+    from .bugsinpy_loader import (
+        DEFAULT_BUGSINPY_ROOT,
+        DEFAULT_CACHE_ROOT,
+        DEFAULT_WORKSPACE_ROOT,
+        _checkout_version,
+    )
+    project = getattr(task, "project", "")
+    bug_id = getattr(task, "bug_id", "")
+    if not project or not bug_id:
+        return
+    repo_dir = _checkout_version(
+        DEFAULT_BUGSINPY_ROOT, DEFAULT_WORKSPACE_ROOT, DEFAULT_CACHE_ROOT,
+        project, bug_id, "buggy",
+    )
+    if hasattr(task, "repo_dir"):
+        task.repo_dir = str(repo_dir)
+    task.task_dir = str(repo_dir)
+
+
 def evaluate_task(agent: BugFixAgent, task: Task) -> TaskResult:
-    logger.info("Evaluating %s", task.task_id)
+    logger.info("Evaluating %s (kind=%s)", task.task_id, getattr(task, "kind", "synthetic"))
+    if getattr(task, "kind", "synthetic") == "bugsinpy":
+        _recheckout_bugsinpy_task(task)
+        from .bugsinpy_runner import compile_and_test
+
+        repo_dir = Path(getattr(task, "repo_dir", task.task_dir))
+        _, failing_output = compile_and_test(DEFAULT_BUGSINPY_ROOT, repo_dir)
+        if hasattr(task, "test_output"):
+            task.test_output = failing_output
+
     agent_result = agent.fix(task)
-    test_result = run_tests_safely(task.task_dir, agent_result.fix)
+
+    if getattr(task, "kind", "synthetic") == "bugsinpy":
+        test_result = _run_tests_bugsinpy(task, agent_result.fix)
+    else:
+        test_result = run_tests_safely(task.task_dir, agent_result.fix)
+
     logger.info(
         "%s -> %s (cost=$%.4f)",
         task.task_id,
@@ -82,8 +142,40 @@ def evaluate_task(agent: BugFixAgent, task: Task) -> TaskResult:
     )
 
 
-def evaluate_split(agent: BugFixAgent, tasks: list[Task]) -> dict[str, TaskResult]:
-    return {task.task_id: evaluate_task(agent, task) for task in tasks}
+_eval_lock = threading.Lock()
+
+
+def evaluate_split(
+    agent: BugFixAgent,
+    tasks: list[Task],
+    max_workers: int = 1,
+) -> dict[str, TaskResult]:
+    """Evaluate agent on a list of tasks, optionally in parallel."""
+    if max_workers <= 1:
+        return {task.task_id: evaluate_task(agent, task) for task in tasks}
+
+    results: dict[str, TaskResult] = {}
+
+    def _eval_one(task: Task) -> tuple[str, TaskResult]:
+        return task.task_id, evaluate_task(agent, task)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(_eval_one, task): task.task_id for task in tasks}
+        for future in concurrent.futures.as_completed(futures):
+            tid = futures[future]
+            try:
+                task_id, result = future.result()
+                results[task_id] = result
+            except Exception as exc:
+                logger.error("Evaluation of %s failed: %s", tid, exc)
+                results[tid] = TaskResult(
+                    task_id=tid,
+                    passed=False,
+                    stdout="",
+                    stderr=str(exc),
+                    duration_s=0.0,
+                )
+    return results
 
 
 def compute_pass_at_1(results: dict[str, TaskResult]) -> float:

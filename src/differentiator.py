@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import random
 from dataclasses import dataclass
@@ -12,7 +14,7 @@ from .convergence import MutationRecord, check_convergence
 from .evaluator import evaluate_split
 from .mutator import MutationContext, Mutator
 from .safeguard import Safeguard
-from .utils import append_jsonl, now_iso, save_json
+from .utils import append_jsonl, load_json, now_iso, save_json
 
 if TYPE_CHECKING:
     from .llm_client import LLMClient
@@ -86,6 +88,7 @@ class Differentiator:
         champion = initial_config.clone()
 
         logger.info("Evaluating initial champion on dev+vital sets…")
+        self._checkpoint_label = "initial"
         champion_results = self._evaluate(champion)
         champion_score = self._dev_score(champion_results)
 
@@ -123,6 +126,7 @@ class Differentiator:
             challenger = self.mutator.apply_mutations(champion, mutation_names, context)
 
             # Evaluate challenger
+            self._checkpoint_label = f"iteration_{iteration}"
             challenger_results = self._evaluate(challenger)
             challenger_score = self._dev_score(challenger_results)
             delta = challenger_score - champion_score
@@ -234,6 +238,7 @@ class Differentiator:
     def _evaluate(self, config: AgentConfig) -> dict[str, bool]:
         """Evaluate config on dev + vital tasks. Returns task_id -> passed."""
         all_ids = list(dict.fromkeys(self.dev_task_ids + self.vital_task_ids))
+        checkpoint_label = getattr(self, "_checkpoint_label", "evaluation")
 
         if self.dry_run:
             # Vital signs are tasks that vanilla already solves, so a typical
@@ -252,10 +257,83 @@ class Differentiator:
                     results[tid] = self.rng.random() < 0.5
             return results
 
-        tasks_to_eval = [self.tasks[tid] for tid in all_ids if tid in self.tasks]
+        checkpoint_path = self._checkpoint_path(checkpoint_label, config)
+        checkpoint = self._load_checkpoint(checkpoint_path)
+        completed: dict[str, dict] = checkpoint.get("results", {})
+
+        if completed:
+            logger.info(
+                "Checkpoint %s: reusing %d/%d completed task results",
+                checkpoint_path.name,
+                len(completed),
+                len(all_ids),
+            )
+
+        if all(tid in completed for tid in all_ids):
+            logger.info("Checkpoint %s is complete; skipping evaluation", checkpoint_path.name)
+            return {tid: bool(completed[tid]["passed"]) for tid in all_ids}
+
         agent = BugFixAgent(config, self.llm)
-        results = evaluate_split(agent, tasks_to_eval)
-        return {tid: r.passed for tid, r in results.items() if tid in all_ids}
+        results: dict[str, bool] = {
+            tid: bool(completed[tid]["passed"])
+            for tid in all_ids
+            if tid in completed
+        }
+
+        for tid in all_ids:
+            if tid in completed:
+                continue
+            task = self.tasks.get(tid)
+            if task is None:
+                results[tid] = False
+                continue
+
+            task_result = evaluate_split(agent, [task])[tid]
+            completed[tid] = {
+                "passed": task_result.passed,
+                "duration_s": round(task_result.duration_s, 3),
+                "cost_usd": round(
+                    task_result.agent_result.cost_usd if task_result.agent_result else 0.0,
+                    6,
+                ),
+            }
+            results[tid] = task_result.passed
+            save_json(checkpoint_path, {
+                "label": checkpoint_label,
+                "config_hash": self._config_hash(config),
+                "config": config.to_dict(),
+                "task_ids": all_ids,
+                "results": completed,
+                "completed": len(completed),
+                "total": len(all_ids),
+                "updated_at": now_iso(),
+            })
+            logger.info(
+                "Checkpoint %s: saved %d/%d task results",
+                checkpoint_path.name,
+                len(completed),
+                len(all_ids),
+            )
+
+        return {tid: results.get(tid, False) for tid in all_ids}
+
+    def _checkpoint_path(self, label: str, config: AgentConfig) -> Path:
+        return self.log_dir / "checkpoints" / f"{label}_{self._config_hash(config)}.json"
+
+    @staticmethod
+    def _config_hash(config: AgentConfig) -> str:
+        payload = json.dumps(config.to_dict(), sort_keys=True, ensure_ascii=True)
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+
+    @staticmethod
+    def _load_checkpoint(path: Path) -> dict:
+        if not path.exists():
+            return {"results": {}}
+        try:
+            return load_json(path)
+        except Exception as exc:
+            logger.warning("Ignoring unreadable checkpoint %s: %s", path, exc)
+            return {"results": {}}
 
     def _dev_score(self, results: dict[str, bool]) -> float:
         """pass@1 on the dev set."""

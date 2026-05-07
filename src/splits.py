@@ -55,17 +55,28 @@ def assign_splits(
     dev, and test are sampled from the remaining tasks.
     """
     rng = random.Random(seed)
+    n_total = len(all_task_ids)
+    if n_total <= 30:
+        target_vital = 4
+        target_calibration = 6
+        target_dev = 8
+    else:
+        target_vital = max(4, round(n_total * 0.15))
+        target_calibration = max(6, round(n_total * 0.25))
+        target_dev = max(8, round(n_total * 0.30))
 
     solved = [task_id for task_id in all_task_ids if vanilla_results.get(task_id, False)]
-    vital_signs = stratified_sample(solved, metadata, n=min(8, len(solved)), rng=rng)
+    vital_signs = stratified_sample(solved, metadata, n=min(target_vital, len(solved)), rng=rng)
 
     remaining = [task_id for task_id in all_task_ids if task_id not in set(vital_signs)]
     rng.shuffle(remaining)
 
-    calibration = stratified_sample(remaining, metadata, n=min(12, len(remaining)), rng=rng)
+    calibration = stratified_sample(
+        remaining, metadata, n=min(target_calibration, len(remaining)), rng=rng
+    )
 
     after_calib = [task_id for task_id in remaining if task_id not in set(calibration)]
-    dev = stratified_sample(after_calib, metadata, n=min(30, len(after_calib)), rng=rng)
+    dev = stratified_sample(after_calib, metadata, n=min(target_dev, len(after_calib)), rng=rng)
 
     test = [task_id for task_id in after_calib if task_id not in set(dev)]
 

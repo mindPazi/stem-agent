@@ -1,0 +1,39 @@
+{
+  "benchmark": "bugsinpy",
+  "split_seed": 42,
+  "split_method": "small fixed pilot split; vital signs sampled from vanilla_direct solved tasks",
+  "vital_signs": [
+    "youtube-dl:4",
+    "youtube-dl:6",
+    "youtube-dl:12",
+    "youtube-dl:17"
+  ],
+  "calibration": [
+    "youtube-dl:1",
+    "youtube-dl:3",
+    "youtube-dl:11",
+    "youtube-dl:15",
+    "youtube-dl:21",
+    "youtube-dl:22"
+  ],
+  "dev": [
+    "youtube-dl:2",
+    "youtube-dl:5",
+    "youtube-dl:7",
+    "youtube-dl:8",
+    "youtube-dl:14",
+    "youtube-dl:16",
+    "youtube-dl:20",
+    "youtube-dl:23"
+  ],
+  "test": [
+    "youtube-dl:9",
+    "youtube-dl:10",
+    "youtube-dl:13",
+    "youtube-dl:18",
+    "youtube-dl:19",
+    "youtube-dl:24",
+    "youtube-dl:25",
+    "youtube-dl:26"
+  ]
+}

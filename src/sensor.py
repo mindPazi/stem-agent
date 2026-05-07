@@ -96,6 +96,7 @@ class Sensor:
         # ── Per-task LLM analysis ────────────────────────────────────────────
         failed_tasks = [t for t in calibration_tasks if not results.get(t.task_id, False)]
         passed_tasks = [t for t in calibration_tasks if results.get(t.task_id, False)]
+        reference_fixes_used = any((Path(t.task_dir) / "fixed.py").exists() for t in calibration_tasks)
 
         logger.info(
             "Sensor: %d calibration tasks (%d failed, %d passed). "
@@ -126,6 +127,7 @@ class Sensor:
             failure_patterns=failure_patterns,
             success_patterns=success_patterns,
             suggested_mutations=suggested_mutations,
+            reference_fixes_used=reference_fixes_used,
         )
         logger.info(
             "Sensor report: %d failure patterns, %d suggested mutations: %s",
@@ -140,16 +142,21 @@ class Sensor:
     def _analyze_failure(self, task: Task, agent_fix: str) -> dict:
         """Ask the LLM why the agent failed on this task."""
         fixed_path = Path(task.task_dir) / "fixed.py"
-        correct_fix = fixed_path.read_text(encoding="utf-8") if fixed_path.exists() else "(not available)"
+        correct_fix = fixed_path.read_text(encoding="utf-8") if fixed_path.exists() else ""
+        test_output = getattr(task, "test_output", "")
 
         prompt = (
             f"A Python bug-fixing agent failed on this task.\n\n"
             f"Category: {task.category}\n"
             f"Description: {task.description}\n\n"
+            f"Failing test output:\n```\n{test_output[:1000] or '(not available)'}\n```\n\n"
             f"Buggy code:\n```python\n{task.buggy_code[:600]}\n```\n\n"
             f"Agent's fix (WRONG):\n```python\n{agent_fix[:400] or '(agent produced no valid fix)'}\n```\n\n"
-            f"Correct fix:\n```python\n{correct_fix[:400]}\n```\n\n"
-            "In 1-2 sentences: what specific pattern caused the agent to fail? "
+            + (
+                f"Correct fix:\n```python\n{correct_fix[:400]}\n```\n\n"
+                if correct_fix else ""
+            )
+            + "In 1-2 sentences: what specific pattern caused the agent to fail? "
             "Be concrete (e.g., 'agent ignored boundary condition', 'agent changed wrong variable')."
         )
 

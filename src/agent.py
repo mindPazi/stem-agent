@@ -22,6 +22,7 @@ class Task:
     test_suite_code: str = ""
     category: str = ""
     difficulty: str = ""
+    kind: str = "synthetic"
 
 
 @dataclass
@@ -66,20 +67,49 @@ class BugFixAgent:
     # ------------------------------------------------------------------
 
     def _user_prompt(self, task: Task) -> str:
+        if task.kind == "bugsinpy":
+            return self._user_prompt_bugsinpy(task)
         fmt_hint = {
             "diff": "Return a unified diff patch of the fix.",
             "function_only": "Return only the fixed function(s), not the entire file.",
         }.get(self.config.output_format, "Return the complete fixed Python file.")
-        # NOTE: We deliberately do NOT include task.test_suite_code in the prompt.
-        # Many test files contain _ref() reference implementations that would
-        # leak the correct algorithm. The agent must rely on the buggy code
-        # itself, the function name, and (in react mode) the get_traceback /
-        # run_tests tools, which is closer to a realistic bug-fixing scenario.
         prompt = (
             "Fix the Python implementation so that all hidden tests pass.\n\n"
             f"Buggy code:\n```python\n{task.buggy_code}\n```"
         )
         return f"{prompt}\n\n{fmt_hint}"
+
+    def _user_prompt_bugsinpy(self, task: Task) -> str:
+        snippets = getattr(task, "snippets", {})
+        changed_ranges = getattr(task, "changed_ranges", [])
+        test_output = getattr(task, "test_output", "")
+        project = getattr(task, "project", "")
+        bug_id = getattr(task, "bug_id", "")
+
+        snippet_text = "\n\n".join(
+            f"File: {fp}\n```python\n{body}\n```" for fp, body in snippets.items()
+        )
+        ranges_text = "\n".join(
+            "- {file}:{start_line}-{end_line}\n{buggy}".format(
+                file=item["file"],
+                start_line=item["start_line"],
+                end_line=item["end_line"],
+                buggy="\n".join(f"  {line}" for line in item.get("buggy_lines", [])),
+            )
+            for item in changed_ranges
+        )
+        return (
+            f"Fix this real BugsInPy bug.\n\n"
+            f"Project: {project}\nBug id: {bug_id}\n\n"
+            f"Failing test output:\n```\n{test_output[:3000]}\n```\n\n"
+            f"Relevant buggy-code snippets with line numbers:\n{snippet_text}\n\n"
+            f"Candidate buggy line ranges to edit:\n{ranges_text}\n\n"
+            "Return only valid JSON with this exact shape:\n"
+            '{"edits":[{"file":"path/to/file.py","start_line":1,"end_line":1,'
+            '"replacement":"replacement line 1\\nreplacement line 2"}]}\n'
+            "The replacement must contain the full corrected text for the selected "
+            "inclusive line range. Do not include markdown or explanation."
+        )
 
     def _base_messages(self, task: Task) -> list[dict]:
         messages: list[dict] = [{"role": "system", "content": self.config.system_prompt}]
@@ -106,6 +136,11 @@ class BugFixAgent:
             return m.group(1).strip()
         return content.strip()
 
+    def _postprocess_fix(self, content: str, task: Task) -> str:
+        if task.kind == "bugsinpy":
+            return content.strip()
+        return self._extract_code(content)
+
     # ------------------------------------------------------------------
     # Strategies
     # ------------------------------------------------------------------
@@ -114,7 +149,7 @@ class BugFixAgent:
         messages = self._base_messages(task)
         resp = self.llm.chat(messages, temperature=self.config.temperature, model=self.config.model)
         return AgentResult(
-            fix=self._extract_code(resp.content),
+            fix=self._postprocess_fix(resp.content, task),
             reasoning="",
             cost_usd=resp.cost_usd,
             iterations=1,
@@ -126,7 +161,7 @@ class BugFixAgent:
         messages[-1]["content"] += f"\n\n{instr}"
         resp = self.llm.chat(messages, temperature=self.config.temperature, model=self.config.model)
         return AgentResult(
-            fix=self._extract_code(resp.content),
+            fix=self._postprocess_fix(resp.content, task),
             reasoning=resp.content,
             cost_usd=resp.cost_usd,
             iterations=1,
@@ -140,10 +175,16 @@ class BugFixAgent:
             )
             return self._fix_direct(task)
         messages = self._base_messages(task)
-        messages[-1]["content"] += (
-            "\n\nYou have tools to inspect and test the code. "
-            "Use them to understand the bug, then return the complete fixed Python file."
-        )
+        if task.kind == "bugsinpy":
+            messages[-1]["content"] += (
+                "\n\nYou have tools to inspect repository files. "
+                "Use them only if needed, then return the JSON edits requested above."
+            )
+        else:
+            messages[-1]["content"] += (
+                "\n\nYou have tools to inspect and test the code. "
+                "Use them to understand the bug, then return the complete fixed Python file."
+            )
         enabled_schemas = [s for s in TOOL_SCHEMAS if s["function"]["name"] in self.tools]
         tool_log: list[dict] = []
         total_cost = 0.0
@@ -191,7 +232,7 @@ class BugFixAgent:
                     })
             else:
                 return AgentResult(
-                    fix=self._extract_code(resp.content),
+                    fix=self._postprocess_fix(resp.content, task),
                     reasoning=resp.content,
                     tool_calls=tool_log,
                     cost_usd=total_cost,
@@ -199,14 +240,16 @@ class BugFixAgent:
                 )
 
         # Exhausted iterations — request final answer
-        messages.append({
-            "role": "user",
-            "content": "Based on your analysis, provide the complete fixed Python file now.",
-        })
+        final_prompt = (
+            "Based on your analysis, provide the fix now."
+            if task.kind == "bugsinpy"
+            else "Based on your analysis, provide the complete fixed Python file now."
+        )
+        messages.append({"role": "user", "content": final_prompt})
         resp = self.llm.chat(messages, temperature=self.config.temperature, model=self.config.model)
         total_cost += resp.cost_usd
         return AgentResult(
-            fix=self._extract_code(resp.content),
+            fix=self._postprocess_fix(resp.content, task),
             reasoning=resp.content,
             tool_calls=tool_log,
             cost_usd=total_cost,
@@ -227,6 +270,11 @@ class BugFixAgent:
         plan_resp = self.llm.chat(plan_messages, temperature=self.config.temperature, model=self.config.model)
         total_cost = plan_resp.cost_usd
 
+        exec_hint = (
+            "Execute this plan and provide the fix."
+            if task.kind == "bugsinpy"
+            else "Execute this plan and return the complete fixed Python file."
+        )
         exec_messages = [
             {"role": "system", "content": self.config.system_prompt},
             {
@@ -234,7 +282,7 @@ class BugFixAgent:
                 "content": (
                     f"{self._user_prompt(task)}\n\n"
                     f"Your plan:\n{plan_resp.content}\n\n"
-                    "Execute this plan and return the complete fixed Python file."
+                    f"{exec_hint}"
                 ),
             },
         ]
@@ -242,7 +290,7 @@ class BugFixAgent:
         total_cost += exec_resp.cost_usd
 
         return AgentResult(
-            fix=self._extract_code(exec_resp.content),
+            fix=self._postprocess_fix(exec_resp.content, task),
             reasoning=f"Plan:\n{plan_resp.content}\n\nExecution:\n{exec_resp.content}",
             cost_usd=total_cost,
             iterations=2,

@@ -38,3 +38,19 @@ def test_assign_splits_uses_vital_tasks_from_vanilla_solved_pool():
     )
     assert sorted(all_split_ids) == sorted(task_ids)
     assert len(all_split_ids) == len(set(all_split_ids))
+
+
+def test_assign_splits_keeps_small_benchmark_test_holdout():
+    task_ids = [f"task_{i:03d}" for i in range(26)]
+    metadata = {
+        task_id: {"category": "logic_error" if i % 2 else "missing_check"}
+        for i, task_id in enumerate(task_ids)
+    }
+    vanilla_results = {task_id: i < 7 for i, task_id in enumerate(task_ids)}
+
+    splits = assign_splits(task_ids, vanilla_results, metadata, seed=42)
+
+    assert len(splits["vital_signs"]) == 4
+    assert len(splits["calibration"]) == 6
+    assert len(splits["dev"]) == 8
+    assert len(splits["test"]) == 8
