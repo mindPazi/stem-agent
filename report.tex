@@ -185,24 +185,25 @@ We treat this as a model-selection probe, not as the project benchmark: the samp
 
 \begin{table}[h]
 \centering
-\caption{BugsInPy youtube-dl calibration of \texttt{vanilla\_direct}. The 5.4-mini run was stopped after 21 bugs once a clear separation from 5.4-nano was visible; gpt-4o-mini was not re-run on this subset, since it is older than both 5.4-series candidates and was already the weakest on the synthetic probe.}
+\caption{BugsInPy youtube-dl calibration of \texttt{vanilla\_direct} on the same 25-bug subset. gpt-4o-mini was not re-run on this subset: it is from an older family and was already the weakest of the three on the saturated synthetic probe.}
 \label{tab:model-calibration}
 \begin{tabular}{lccl}
 \toprule
 Model & Solved & pass@1 & Notes \\
 \midrule
 \texttt{gpt-5.4-nano-2026-03-17} & 6/25  & 24.0\% & full subset \\
-\texttt{gpt-5.4-mini-2026-03-17} & 7/21  & 33.3\% & stopped early, time-budget cutoff \\
-\texttt{gpt-4o-mini-2024-07-18}  & ---   & ---    & not re-run on this subset \\
+\texttt{gpt-5.4-mini-2026-03-17} & 7/25  & 28.0\% & full subset \\
+\texttt{gpt-4o-mini-2024-07-18}  & n/a   & n/a    & not re-run on this subset \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \textbf{Selected model: \texttt{gpt-5.4-mini-2026-03-17}.}
-On real bugs the gap between the two 5.4-series candidates is large in relative terms (33.3\% vs 24.0\%, roughly $1.4\times$), and 5.4-nano sits low enough that small absolute changes from differentiation would be hard to separate from noise.
-5.4-mini lands in the 30--40\% band, which gives the differentiation loop usable headroom while still leaving the subset unsaturated.
-We did not run a third full calibration of \texttt{gpt-4o-mini} on the BugsInPy subset: it is from an older family, was already the weakest of the three on the saturated synthetic probe, and the time budget for model selection had been spent.
-We acknowledge this leaves \texttt{gpt-4o-mini} as an inferred-rather-than-measured comparison on the BugsInPy subset and treat the choice between the two 5.4 candidates as the load-bearing one.
+5.4-mini outperforms 5.4-nano on the same 25-bug subset (28.0\% vs 24.0\%) and lands in a range that leaves usable headroom for differentiation without saturating the benchmark.
+We did not run a third full calibration of \texttt{gpt-4o-mini} on the BugsInPy subset: it is from an older family, was already the weakest of the three on the saturated synthetic probe, and re-running it would have consumed calibration budget without a plausible path to selection.
+We acknowledge this leaves \texttt{gpt-4o-mini} as an inferred-rather-than-measured comparison on the BugsInPy subset and treat the choice between the two 5.4 candidates as the load-bearing decision.
+A rigorous selection would involve statistical testing to verify whether the observed gap is above noise rather than a sampling artefact; with $n{=}25$ the difference is not significant on its own.
+Given time constraints, and given the convergence of evidence (5.4-mini is a newer, larger model in the same family, it scored higher on both the saturated synthetic probe and the real-bug subset, and 4o-mini was already eliminated), we accept 5.4-mini as the working model without a formal significance gate.
 The selected model is pinned in \texttt{src/config.py} (\texttt{DEFAULT\_MODEL}) and \texttt{configs/default.yaml}, and the \texttt{LLMClient} default uses the same identifier.
 
 \textbf{Acknowledged benchmark limitations.} The benchmark is synthetic: every
