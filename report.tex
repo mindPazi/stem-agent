@@ -55,7 +55,7 @@
 \end{titlepage}
 
 \tableofcontents
-
+\newpage
 %% PAGE 1
 
 \section{Goal and Scope}
@@ -70,12 +70,28 @@ line ranges.
 
 \section{Benchmark and Splits}
 
+The first iteration used a synthetic benchmark of 90 tasks built via mutation
+testing on Exercism Python exercises (single-point bugs: off-by-one, wrong
+operator, missing guard, wrong variable). After running the vanilla baseline,
+\texttt{gpt-4o-mini} solved ${\sim}80\%$ with a single direct call. This left
+no measurable room for the stem-agent search to improve. A useful benchmark
+requires the base model to sit in a middle range, not near 0\% and not near
+100\%. I discarded the synthetic set and switched to BugsInPy~\cite{widyasari2020},
+where the same model solves roughly 25--30\% under oracle fault-localization.
+
 The benchmark is a frozen subset of 26 real BugsInPy bugs from
 \texttt{youtube-dl}, stored in \texttt{benchmark/subset.json}. The prompt uses
 a \textbf{fault-localization oracle}: snippets around the reference patch's
 line ranges are shown, but the fixed code is never shown. This isolates patch
 generation from bug localization; quantifying the oracle's advantage would
 require a parallel full-file evaluation, left for future work.
+
+This is a pilot subset, not the benchmark I would use for a final evaluation. The
+intended workflow was to collect a larger set of BugsInPy bugs, validate each
+bug locally to make sure the checkout, dependencies, and test command were not
+broken by environment drift, and then execute the agent comparison on the
+validated set. The time budget was enough to build and run the pipeline on this
+small subset, but not to expand and validate the benchmark properly.
 
 The split is fixed in \texttt{benchmark/splits.json}:
 
@@ -95,7 +111,8 @@ Test & 8 & Final held-out evaluation \\
 \textbf{Statistical power.} With $n{=}8$ binary outcomes, a one-sided exact
 binomial test at $\alpha{=}0.05$ against $p_0{=}0.25$ requires $\geq 5/8$
 successes to reject $H_0$; only a $\geq$37.5\,pp improvement is detectable.
-All conclusions from this test split are directional evidence, not statistical claims.
+The numbers below should therefore be read as a pipeline check and qualitative
+failure analysis, not as evidence about the real task distribution.
 
 \section{Stem-Agent Mechanism}
 
@@ -126,7 +143,7 @@ calibration only).
 Anti-leakage: a unit test verifies that test-suite source code never appears in
 the agent prompt.
 
-\textit{Note:} In the 9-iteration run only 7 of 15 operators were sampled
+\textit{Note:} In the 9-iteration run only 8 of 15 operators were sampled
 (specialize\_for\_category, add\_constraint, switch\_approach, adjust\_temperature,
 remove\_constraint, rephrase\_system, enable\_tool + add\_exemplar). The three
 structural operators were not sampled; with more iterations or seeds, coverage
@@ -161,8 +178,8 @@ Agent & Solved & pass@1 & 95\% CI \\
 
 All single-call agents (direct, CoT) cost $\sim$\$0.003.
 \texttt{hand\_tuned} uses ReAct with tool calls, requiring $\sim$100$\times$ more
-tokens for the same tasks with no accuracy gain, suggesting that multi-step
-tool use is not cost-effective on this benchmark.
+tokens for the same tasks with no accuracy gain in this pilot run. That is a
+cost warning for this setup; it does not settle multi-step tool use in general.
 
 McNemar $p{=}1.0$ for all pairs. The stem agent matches vanilla at 2/8 but
 solves a \emph{different} pair (\texttt{youtube-dl:10} instead of
@@ -187,11 +204,11 @@ Variant & Dev score & Iters & Accepted & Converged \\
 \end{tabular}
 \end{center}
 
-Two observations (both from a \textbf{single seed}; see caveat below):
-(1)~Random search achieved the highest dev score but dropped on test, overfitting
-without the safeguard.
-(2)~Without sensor guidance, zero mutations were accepted; the search made no
-progress.
+Two run-level observations (both from a \textbf{single seed}; see caveat below):
+(1)~Random search achieved the highest dev score but dropped on test, a pattern
+compatible with chasing noise on the tiny dev split.
+(2)~Without sensor guidance, zero mutations were accepted; within this seed, the
+search made no progress.
 Both stem\_agent and no\_safeguard independently found \texttt{switch\_approach}
 (direct$\to$CoT).
 
@@ -203,41 +220,37 @@ Both stem\_agent and no\_safeguard independently found \texttt{switch\_approach}
 Variant & Removes & Observed effect \\
 \midrule
 \texttt{stem\_agent} & (full system) & Found CoT, dev 0.250 \\
-\texttt{no\_sensor} & Sensor & Stuck at baseline, 0 accepted \\
+\texttt{no\_sensor} & Sensor & No accepted mutations \\
 \texttt{no\_safeguard} & Safeguard & Same as full system \\
-\texttt{random\_search} & Both & Overfit dev, dropped on test \\
+\texttt{random\_search} & Both & Higher dev, lower test \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The sensor appears critical in this run. The safeguard contributed less because
-CoT happened to preserve vital signs; on a more diverse benchmark it may matter
-more.
+In this run, the sensor was the component associated with an accepted mutation.
+The safeguard contributed less because CoT happened to preserve vital signs; a
+larger validated benchmark would be needed to say whether that pattern holds.
 
 \textbf{Single-seed caveat.} All runs use seed=42 with 10 iterations.
 The difference between 0 and 1 accepted mutations could be sampling noise.
-Running 3--5 seeds would strengthen or weaken these claims; this was not
+Running 3--5 seeds would show whether the same pattern repeats; this was not
 feasible in the one-day budget.
 
 %% PAGE 3-4
 
 \section{What Surprised Me}
 
-\textbf{Safeguard threshold.} The initial threshold of 1.0 made the loop
-completely stuck: one fragile vital task (\texttt{youtube-dl:6}) broke under any
-prompt variation. Lowering to 0.75 was a one-line fix but required understanding
-\emph{why} the loop was stuck. This illustrates a general tension: strict safety
-needs slack when evaluation is noisy.
+\textbf{Pipeline cost.} I expected the benchmark pipeline to take less time.
+Instead, validating BugsInPy tasks, handling local environment issues, and making
+evaluation reproducible took most of the work. This is why the validated subset
+stayed small.
 
-\textbf{Random search overfitting.} Random search hit 0.375 on dev (highest)
-but 1/8 on test, a concrete demonstration that unconstrained search exploits
-small dev sets.
+\textbf{Small-model brittleness.} I expected \texttt{gpt-5.4-mini} to perform
+better as a direct fixer on localized bugs. In the pilot, it solved only a small
+fraction of tasks, even with fault-localized snippets. This matters for the
+project because the whole setup is about whether configuration and prompting can
+make a small agent more reliable.
 
-\textbf{Convergence to CoT.} The loop ``rediscovered'' chain-of-thought as the
-best strategy. Both the full system and no\_safeguard converged to the same
-mutation independently. This validates the search mechanism but also shows its
-limit: the 15-operator space did not surface anything a practitioner wouldn't
-try first.
 
 \section{Limitations and Failure Modes}
 
@@ -249,10 +262,10 @@ try first.
   is effectively identical to vanilla\_cot's (same default fallback);
   only the system prompt differs (``expert \ldots\ Return only the corrected
   code''). Whether that prompt wording matters requires this comparison.
-\item \textbf{Small test split.} 8 tasks make any difference undetectable
-  below $\sim$37.5\,pp. The CIs confirm this.
-\item \textbf{Single seed.} All ablation claims rest on one run. The sensor's
-  criticality is suggestive, not conclusive.
+\item \textbf{Small validated subset.} The 26 validated bugs leave only 8 test
+  tasks, making any difference below $\sim$37.5\,pp undetectable.
+\item \textbf{Single seed.} All ablation observations rest on one run. The sensor's
+  effect is only a run-level observation.
 \item \textbf{Fault-localization oracle.} The agent sees candidate line ranges,
   making the task easier than real-world debugging.
 \item \textbf{Bounded search space.} The 15 operators modify prompts and config
@@ -262,9 +275,13 @@ try first.
 \section{What I Would Do Next}
 
 \begin{itemize}[nosep]
-\item Expand to 60+ validated bugs across multiple BugsInPy projects to get a
-  statistically meaningful test split.
-\item Run 3--5 seeds to measure variance and confirm/refute the sensor finding.
+\item The main next step is to expand the subset to 60+ validated bugs across
+  multiple BugsInPy projects. I would first collect more bugs, validate each
+  one locally to confirm that the buggy and fixed checkouts and tests still run,
+  discard broken tasks, and only then run the agent comparison on the validated
+  set.
+\item After the benchmark is expanded, run 3--5 seeds to measure variance and
+  check whether the sensor pattern repeats.
 \item Run \texttt{vanilla\_cot} on the test split and compare directly.
 \item Evaluate without the fault-localization oracle to quantify its advantage.
 \end{itemize}
