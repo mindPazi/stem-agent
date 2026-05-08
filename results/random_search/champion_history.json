@@ -1,0 +1,59 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.0,
+    "config": {
+      "system_prompt": "You are an expert Python developer. Fix the bug in the provided code. Return only the corrected Python code, no explanation.",
+      "few_shot_examples": [],
+      "reasoning_instruction": "",
+      "output_format": "full_file",
+      "enabled_tools": [],
+      "tool_use_strategy": "never",
+      "approach": "direct",
+      "max_iterations": 1,
+      "temperature": 0.0,
+      "model": "gpt-5.4-mini-2026-03-17"
+    },
+    "timestamp": "2026-05-08T01:50:46.846647+00:00"
+  },
+  {
+    "iteration": 1,
+    "score": 0.125,
+    "config": {
+      "system_prompt": "You are an expert Python developer. Fix the bug in the provided code. Return only the corrected Python code, no explanation.",
+      "few_shot_examples": [],
+      "reasoning_instruction": "",
+      "output_format": "full_file",
+      "enabled_tools": [],
+      "tool_use_strategy": "never",
+      "approach": "direct",
+      "max_iterations": 1,
+      "temperature": 0.0,
+      "model": "gpt-5.4-mini-2026-03-17"
+    },
+    "mutations": [
+      "add_exemplar"
+    ],
+    "timestamp": "2026-05-08T01:56:57.690751+00:00"
+  },
+  {
+    "iteration": 3,
+    "score": 0.375,
+    "config": {
+      "system_prompt": "You are a highly skilled Python developer. Repair the bug in the given code. Output only the corrected Python code, with no explanation.",
+      "few_shot_examples": [],
+      "reasoning_instruction": "",
+      "output_format": "full_file",
+      "enabled_tools": [],
+      "tool_use_strategy": "never",
+      "approach": "direct",
+      "max_iterations": 1,
+      "temperature": 0.0,
+      "model": "gpt-5.4-mini-2026-03-17"
+    },
+    "mutations": [
+      "rephrase_system"
+    ],
+    "timestamp": "2026-05-08T02:09:13.001132+00:00"
+  }
+]

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import datetime
 import json
 import logging
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -44,6 +46,7 @@ class LLMClient:
         self.client = openai.OpenAI(api_key=api_key)
         self.default_model = default_model
         self.total_cost: float = 0.0
+        self._lock = threading.Lock()
         self._log_path = (log_dir or Path("results")) / "api_calls.jsonl"
         self._log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -78,7 +81,8 @@ class LLMClient:
 
         in_price, out_price = _PRICING.get(model, _PRICING["gpt-5.4-mini-2026-03-17"])
         cost = usage["prompt_tokens"] * in_price + usage["completion_tokens"] * out_price
-        self.total_cost += cost
+        with self._lock:
+            self.total_cost += cost
 
         tool_calls: list[dict] | None = None
         if msg.tool_calls:
@@ -110,18 +114,18 @@ class LLMClient:
         return resp
 
     def _log(self, resp: LLMResponse) -> None:
-        import datetime
-
         record = {
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "model": resp.model,
             "prompt_tokens": resp.usage["prompt_tokens"],
             "completion_tokens": resp.usage["completion_tokens"],
             "cost_usd": resp.cost_usd,
             "latency_ms": resp.latency_ms,
         }
-        with open(self._log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(record) + "\n")
+        line = json.dumps(record) + "\n"
+        with self._lock:
+            with open(self._log_path, "a", encoding="utf-8") as f:
+                f.write(line)
 
     def get_total_cost(self) -> float:
         return self.total_cost

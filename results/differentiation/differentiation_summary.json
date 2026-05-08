@@ -1,14 +1,14 @@
 {
-  "final_score": 0.125,
-  "total_iterations": 3,
-  "converged": false,
-  "accepted_mutations": 0,
+  "final_score": 0.25,
+  "total_iterations": 9,
+  "converged": true,
+  "accepted_mutations": 1,
   "safeguard_rejections": 3,
-  "no_improvement_rejections": 0,
-  "total_cost_usd": 0.0219696,
+  "no_improvement_rejections": 5,
+  "total_cost_usd": 0.04741575,
   "model": "gpt-5.4-mini-2026-03-17",
-  "max_iterations": 3,
-  "vital_threshold": 1.0,
+  "max_iterations": 10,
+  "vital_threshold": 0.75,
   "dry_run": false,
   "benchmark": "bugsinpy"
 }

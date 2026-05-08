@@ -1,0 +1,95 @@
+{
+  "label": "iteration_5",
+  "config_hash": "aba74150c7b8",
+  "config": {
+    "system_prompt": "You are an expert Python developer. Fix the bug in the provided code. Return only the corrected Python code, no explanation.\nAlways check for off-by-one errors in loop bounds and array indices.",
+    "few_shot_examples": [],
+    "reasoning_instruction": "",
+    "output_format": "diff",
+    "enabled_tools": [],
+    "tool_use_strategy": "never",
+    "approach": "cot",
+    "max_iterations": 1,
+    "temperature": 0.0,
+    "model": "gpt-5.4-mini-2026-03-17"
+  },
+  "task_ids": [
+    "youtube-dl:2",
+    "youtube-dl:5",
+    "youtube-dl:7",
+    "youtube-dl:8",
+    "youtube-dl:14",
+    "youtube-dl:16",
+    "youtube-dl:20",
+    "youtube-dl:23",
+    "youtube-dl:4",
+    "youtube-dl:6",
+    "youtube-dl:12",
+    "youtube-dl:17"
+  ],
+  "results": {
+    "youtube-dl:7": {
+      "passed": false,
+      "duration_s": 35.944,
+      "cost_usd": 0.000321
+    },
+    "youtube-dl:5": {
+      "passed": false,
+      "duration_s": 40.358,
+      "cost_usd": 0.000459
+    },
+    "youtube-dl:2": {
+      "passed": false,
+      "duration_s": 41.036,
+      "cost_usd": 0.000335
+    },
+    "youtube-dl:8": {
+      "passed": false,
+      "duration_s": 41.514,
+      "cost_usd": 0.000333
+    },
+    "youtube-dl:16": {
+      "passed": false,
+      "duration_s": 43.444,
+      "cost_usd": 0.000607
+    },
+    "youtube-dl:14": {
+      "passed": true,
+      "duration_s": 43.561,
+      "cost_usd": 0.000841
+    },
+    "youtube-dl:20": {
+      "passed": false,
+      "duration_s": 41.267,
+      "cost_usd": 0.000354
+    },
+    "youtube-dl:4": {
+      "passed": true,
+      "duration_s": 40.735,
+      "cost_usd": 0.000443
+    },
+    "youtube-dl:23": {
+      "passed": false,
+      "duration_s": 41.183,
+      "cost_usd": 0.00044
+    },
+    "youtube-dl:6": {
+      "passed": false,
+      "duration_s": 40.962,
+      "cost_usd": 0.000542
+    },
+    "youtube-dl:17": {
+      "passed": true,
+      "duration_s": 38.971,
+      "cost_usd": 0.000271
+    },
+    "youtube-dl:12": {
+      "passed": true,
+      "duration_s": 39.424,
+      "cost_usd": 0.000264
+    }
+  },
+  "completed": 12,
+  "total": 12,
+  "updated_at": "2026-05-08T01:30:50.841839+00:00"
+}

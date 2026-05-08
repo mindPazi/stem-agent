@@ -1,0 +1,51 @@
+{
+  "agent": "no_safeguard",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "timestamp": "2026-05-08T03:14:55.145999+00:00",
+  "results": {
+    "youtube-dl:9": {
+      "passed": false,
+      "duration_s": 38.027,
+      "cost_usd": 0.000855
+    },
+    "youtube-dl:13": {
+      "passed": true,
+      "duration_s": 40.309,
+      "cost_usd": 0.000285
+    },
+    "youtube-dl:10": {
+      "passed": false,
+      "duration_s": 82.934,
+      "cost_usd": 0.000264
+    },
+    "youtube-dl:18": {
+      "passed": false,
+      "duration_s": 41.868,
+      "cost_usd": 0.000249
+    },
+    "youtube-dl:19": {
+      "passed": false,
+      "duration_s": 43.769,
+      "cost_usd": 0.000377
+    },
+    "youtube-dl:24": {
+      "passed": false,
+      "duration_s": 37.512,
+      "cost_usd": 0.000574
+    },
+    "youtube-dl:25": {
+      "passed": false,
+      "duration_s": 40.473,
+      "cost_usd": 0.000333
+    },
+    "youtube-dl:26": {
+      "passed": false,
+      "duration_s": 39.267,
+      "cost_usd": 0.000276
+    }
+  },
+  "n_total": 8,
+  "n_passed": 1,
+  "pass_at_1": 0.125,
+  "total_cost_usd": 0.310993
+}

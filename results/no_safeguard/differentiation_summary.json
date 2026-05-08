@@ -1,0 +1,11 @@
+{
+  "variant": "no_safeguard",
+  "final_score": 0.25,
+  "total_iterations": 7,
+  "converged": true,
+  "accepted_mutations": 1,
+  "safeguard_rejections": 0,
+  "total_cost_usd": 0.047448000000000004,
+  "model": "gpt-5.4-mini-2026-03-17",
+  "benchmark": "bugsinpy"
+}

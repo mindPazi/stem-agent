@@ -1,0 +1,14 @@
+{
+  "final_score": 0.375,
+  "total_iterations": 8,
+  "converged": true,
+  "accepted_mutations": 2,
+  "total_cost_usd": 0.04612485,
+  "model": "gpt-5.4-mini-2026-03-17",
+  "max_iterations": 10,
+  "vital_threshold": 0.0,
+  "sensor_report": null,
+  "dry_run": false,
+  "benchmark": "bugsinpy",
+  "variant": "random_search"
+}

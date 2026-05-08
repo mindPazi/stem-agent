@@ -12,6 +12,9 @@ from .tools import TOOL_FUNCTIONS, TOOL_SCHEMAS
 
 logger = logging.getLogger(__name__)
 
+_RE_CODE_PYTHON = re.compile(r"```(?:python)?\n(.*?)```", re.DOTALL)
+_RE_CODE_GENERIC = re.compile(r"```\n?(.*?)```", re.DOTALL)
+
 
 @dataclass
 class Task:
@@ -45,10 +48,8 @@ class BugFixAgent:
         self.llm = llm_client
         all_tools = tools or TOOL_FUNCTIONS
         self.tools = {name: all_tools[name] for name in config.enabled_tools if name in all_tools}
-        self._task_dir: str = ""
-
+        self._enabled_schemas = [s for s in TOOL_SCHEMAS if s["function"]["name"] in self.tools] or None
     def fix(self, task: Task) -> AgentResult:
-        self._task_dir = task.task_dir
         logger.debug("Fixing task %s with approach=%s", task.task_id, self.config.approach)
         match self.config.approach:
             case "direct":
@@ -128,10 +129,10 @@ class BugFixAgent:
 
     @staticmethod
     def _extract_code(content: str) -> str:
-        m = re.search(r"```(?:python)?\n(.*?)```", content, re.DOTALL)
+        m = _RE_CODE_PYTHON.search(content)
         if m:
             return m.group(1).strip()
-        m = re.search(r"```\n?(.*?)```", content, re.DOTALL)
+        m = _RE_CODE_GENERIC.search(content)
         if m:
             return m.group(1).strip()
         return content.strip()
@@ -185,14 +186,13 @@ class BugFixAgent:
                 "\n\nYou have tools to inspect and test the code. "
                 "Use them to understand the bug, then return the complete fixed Python file."
             )
-        enabled_schemas = [s for s in TOOL_SCHEMAS if s["function"]["name"] in self.tools]
         tool_log: list[dict] = []
         total_cost = 0.0
 
         for iteration in range(self.config.max_iterations):
             resp = self.llm.chat(
                 messages,
-                tools=enabled_schemas or None,
+                tools=self._enabled_schemas,
                 temperature=self.config.temperature,
                 model=self.config.model,
             )
@@ -220,7 +220,7 @@ class BugFixAgent:
                     fn = self.tools.get(tc["name"])
                     if fn:
                         try:
-                            result = fn(self._task_dir, **tc["arguments"])
+                            result = fn(task.task_dir, **tc["arguments"])
                         except Exception as e:
                             result = f"Tool error: {e}"
                     else:

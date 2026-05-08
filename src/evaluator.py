@@ -5,7 +5,6 @@ import logging
 import shutil
 import subprocess
 import tempfile
-import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -89,20 +88,13 @@ def _run_tests_bugsinpy(task: Task, agent_fix: str) -> TestResult:
 
 def _recheckout_bugsinpy_task(task: Task) -> None:
     """Re-checkout the buggy version so edits from a prior agent don't persist."""
-    from .bugsinpy_loader import (
-        DEFAULT_BUGSINPY_ROOT,
-        DEFAULT_CACHE_ROOT,
-        DEFAULT_WORKSPACE_ROOT,
-        _checkout_version,
-    )
+    from .bugsinpy_loader import fast_recheckout
+
     project = getattr(task, "project", "")
     bug_id = getattr(task, "bug_id", "")
     if not project or not bug_id:
         return
-    repo_dir = _checkout_version(
-        DEFAULT_BUGSINPY_ROOT, DEFAULT_WORKSPACE_ROOT, DEFAULT_CACHE_ROOT,
-        project, bug_id, "buggy",
-    )
+    repo_dir = fast_recheckout(project, bug_id)
     if hasattr(task, "repo_dir"):
         task.repo_dir = str(repo_dir)
     task.task_dir = str(repo_dir)
@@ -140,9 +132,6 @@ def evaluate_task(agent: BugFixAgent, task: Task) -> TaskResult:
         duration_s=test_result.duration_s,
         agent_result=agent_result,
     )
-
-
-_eval_lock = threading.Lock()
 
 
 def evaluate_split(

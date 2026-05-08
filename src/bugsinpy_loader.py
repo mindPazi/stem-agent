@@ -26,6 +26,8 @@ DEFAULT_BUGSINPY_ROOT = Path("C:/tmp/BugsInPy")
 DEFAULT_CACHE_ROOT = Path("C:/tmp/bugsinpy-project-cache")
 DEFAULT_WORKSPACE_ROOT = Path("workspace/bugsinpy-eval-workspace")
 
+_checkout_cache: dict[tuple[str, str], dict] = {}
+
 
 def _wsl_path(path: Path) -> str:
     resolved = path.resolve()
@@ -140,11 +142,63 @@ def _checkout_version(
     (repo_dir / "bugsinpy_patchfile.info").write_text("", encoding="utf-8")
     if (bug_dir / "setup.sh").exists():
         shutil.copyfile(bug_dir / "setup.sh", repo_dir / "bugsinpy_setup.sh")
+
+    if version == "buggy":
+        _checkout_cache[(project, bug_id)] = {
+            "repo_dir": repo_dir,
+            "buggy_commit": buggy_commit,
+            "fixed_tests": fixed_tests,
+            "bug_dir": bug_dir,
+        }
+
     return repo_dir
 
 
-def _load_patch_files_and_hunks(patch_path: Path) -> dict[str, list[tuple[int, int]]]:
-    text = patch_path.read_text(encoding="utf-8", errors="ignore")
+def fast_recheckout(project: str, bug_id: str) -> Path:
+    """Reset an existing buggy checkout instead of full rm + clone (~10x faster)."""
+    cached = _checkout_cache.get((project, bug_id))
+    if cached is None:
+        return _checkout_version(
+            DEFAULT_BUGSINPY_ROOT, DEFAULT_WORKSPACE_ROOT, DEFAULT_CACHE_ROOT,
+            project, bug_id, "buggy",
+        )
+
+    repo_dir: Path = cached["repo_dir"]
+    buggy_commit: str = cached["buggy_commit"]
+    fixed_tests: dict[str, bytes] = cached["fixed_tests"]
+    bug_dir: Path = cached["bug_dir"]
+
+    repo_wsl = shlex.quote(_wsl_path(repo_dir))
+    reset = _run_bash(
+        f"cd {repo_wsl} && git reset --hard {shlex.quote(buggy_commit)} && git clean -f -d",
+        timeout=120,
+    )
+    if reset.returncode != 0:
+        logger.warning("fast_recheckout reset failed, falling back to full checkout")
+        _checkout_cache.pop((project, bug_id), None)
+        return _checkout_version(
+            DEFAULT_BUGSINPY_ROOT, DEFAULT_WORKSPACE_ROOT, DEFAULT_CACHE_ROOT,
+            project, bug_id, "buggy",
+        )
+
+    for rel, content in fixed_tests.items():
+        target = repo_dir / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+
+    shutil.copyfile(bug_dir / "bug.info", repo_dir / "bugsinpy_bug.info")
+    shutil.copyfile(bug_dir / "requirements.txt", repo_dir / "bugsinpy_requirements.txt")
+    shutil.copyfile(bug_dir / "run_test.sh", repo_dir / "bugsinpy_run_test.sh")
+    (repo_dir / "bugsinpy_patchfile.info").write_text("", encoding="utf-8")
+    if (bug_dir / "setup.sh").exists():
+        shutil.copyfile(bug_dir / "setup.sh", repo_dir / "bugsinpy_setup.sh")
+
+    return repo_dir
+
+
+def _load_patch_files_and_hunks(patch_path: Path, text: str | None = None) -> dict[str, list[tuple[int, int]]]:
+    if text is None:
+        text = patch_path.read_text(encoding="utf-8", errors="ignore")
     current: str | None = None
     out: dict[str, list[tuple[int, int]]] = {}
     for line in text.splitlines():
@@ -162,8 +216,9 @@ def _load_patch_files_and_hunks(patch_path: Path) -> dict[str, list[tuple[int, i
     return out
 
 
-def _load_patch_changed_ranges(patch_path: Path) -> list[dict]:
-    text = patch_path.read_text(encoding="utf-8", errors="ignore")
+def _load_patch_changed_ranges(patch_path: Path, text: str | None = None) -> list[dict]:
+    if text is None:
+        text = patch_path.read_text(encoding="utf-8", errors="ignore")
     current: str | None = None
     old_line = 0
     ranges: list[dict] = []
@@ -223,9 +278,10 @@ def _snippet(path: Path, hunks: list[tuple[int, int]], context: int = 35) -> str
     return "\n\n".join(chunks)
 
 
-def _classify_bug(changed_ranges: list[dict], patch_path: Path) -> str:
+def _classify_bug(changed_ranges: list[dict], patch_path: Path, text: str | None = None) -> str:
     """Heuristic category from the patch content."""
-    text = patch_path.read_text(encoding="utf-8", errors="ignore")
+    if text is None:
+        text = patch_path.read_text(encoding="utf-8", errors="ignore")
     buggy_lines = []
     for r in changed_ranges:
         buggy_lines.extend(r.get("buggy_lines", []))
@@ -246,8 +302,9 @@ def _classify_bug(changed_ranges: list[dict], patch_path: Path) -> str:
     return "other"
 
 
-def _count_lines_changed(patch_path: Path) -> int:
-    text = patch_path.read_text(encoding="utf-8", errors="ignore")
+def _count_lines_changed(patch_path: Path, text: str | None = None) -> int:
+    if text is None:
+        text = patch_path.read_text(encoding="utf-8", errors="ignore")
     return sum(1 for line in text.splitlines() if line.startswith("+") or line.startswith("-"))
 
 
@@ -283,9 +340,10 @@ def load_bugsinpy_task(
     )
     bug_dir = bugsinpy_root / "projects" / project / "bugs" / bug_id
     patch_path = bug_dir / "bug_patch.txt"
+    patch_text = patch_path.read_text(encoding="utf-8", errors="ignore")
 
-    changed = _load_patch_files_and_hunks(patch_path)
-    changed_ranges = _load_patch_changed_ranges(patch_path)
+    changed = _load_patch_files_and_hunks(patch_path, text=patch_text)
+    changed_ranges = _load_patch_changed_ranges(patch_path, text=patch_text)
 
     snippets = {
         file_path: _snippet(repo_dir / file_path, hunks)
@@ -293,8 +351,8 @@ def load_bugsinpy_task(
         if (repo_dir / file_path).exists()
     }
     buggy_code = "\n\n".join(snippets.values()) if snippets else ""
-    category = _classify_bug(changed_ranges, patch_path)
-    lines_changed = _count_lines_changed(patch_path)
+    category = _classify_bug(changed_ranges, patch_path, text=patch_text)
+    lines_changed = _count_lines_changed(patch_path, text=patch_text)
     difficulty = "easy" if lines_changed <= 4 else ("medium" if lines_changed <= 12 else "hard")
 
     return BugsInPyTask(

@@ -14,6 +14,8 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+_RE_JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
+
 
 def _wsl_path(path: Path) -> str:
     resolved = path.resolve()
@@ -32,7 +34,7 @@ def _run_bash(command: str, timeout: int = 300) -> subprocess.CompletedProcess[s
 
 
 def _extract_json(content: str) -> dict:
-    fenced = re.search(r"```(?:json)?\s*(.*?)```", content, re.DOTALL)
+    fenced = _RE_JSON_FENCE.search(content)
     if fenced:
         content = fenced.group(1)
     start = content.find("{")

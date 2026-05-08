@@ -1,0 +1,70 @@
+{
+  "stats": {
+    "vanilla_direct": {
+      "pass_at_1": 0.25,
+      "ci_95_lo": 0.0,
+      "ci_95_hi": 0.625,
+      "n_passed": 2,
+      "n_total": 8,
+      "mcnemar_p_vs_vanilla": null,
+      "total_cost_usd": 0.003477
+    },
+    "hand_tuned": {
+      "pass_at_1": 0.125,
+      "ci_95_lo": 0.0,
+      "ci_95_hi": 0.375,
+      "n_passed": 1,
+      "n_total": 8,
+      "mcnemar_p_vs_vanilla": 1.0,
+      "total_cost_usd": 0.298444
+    },
+    "stem_agent": {
+      "pass_at_1": 0.25,
+      "ci_95_lo": 0.0,
+      "ci_95_hi": 0.625,
+      "n_passed": 2,
+      "n_total": 8,
+      "mcnemar_p_vs_vanilla": 1.0,
+      "total_cost_usd": 0.301656
+    },
+    "random_search": {
+      "pass_at_1": 0.125,
+      "ci_95_lo": 0.0,
+      "ci_95_hi": 0.375,
+      "n_passed": 1,
+      "n_total": 8,
+      "mcnemar_p_vs_vanilla": 1.0,
+      "total_cost_usd": 0.304723
+    },
+    "no_sensor": {
+      "pass_at_1": 0.125,
+      "ci_95_lo": 0.0,
+      "ci_95_hi": 0.375,
+      "n_passed": 1,
+      "n_total": 8,
+      "mcnemar_p_vs_vanilla": 1.0,
+      "total_cost_usd": 0.307781
+    },
+    "no_safeguard": {
+      "pass_at_1": 0.125,
+      "ci_95_lo": 0.0,
+      "ci_95_hi": 0.375,
+      "n_passed": 1,
+      "n_total": 8,
+      "mcnemar_p_vs_vanilla": 1.0,
+      "total_cost_usd": 0.310993
+    }
+  },
+  "test_ids": [
+    "youtube-dl:9",
+    "youtube-dl:10",
+    "youtube-dl:13",
+    "youtube-dl:18",
+    "youtube-dl:19",
+    "youtube-dl:24",
+    "youtube-dl:25",
+    "youtube-dl:26"
+  ],
+  "timestamp": "2026-05-08T03:15:00.889336+00:00",
+  "model": "gpt-5.4-mini-2026-03-17"
+}

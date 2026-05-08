@@ -38,7 +38,7 @@ from src.bugsinpy_loader import (
 from src.agent import BugFixAgent
 from src.baselines import make_baselines
 from src.config import DEFAULT_MODEL, AgentConfig
-from src.evaluator import evaluate_task
+from src.evaluator import evaluate_split, evaluate_task
 from src.llm_client import LLMClient
 from src.utils import load_env_file, load_json, now_iso, save_json, setup_logging
 
@@ -48,12 +48,10 @@ logger = logging.getLogger(__name__)
 def _bootstrap_ci(passed: list[bool], n_resamples: int = 10000, alpha: float = 0.05) -> tuple[float, float, float]:
     """Bootstrap 95% CI for pass@1."""
     arr = np.array(passed, dtype=float)
-    mean = arr.mean()
+    mean = float(arr.mean())
     rng = np.random.default_rng(42)
-    boot_means = np.array([
-        rng.choice(arr, size=len(arr), replace=True).mean()
-        for _ in range(n_resamples)
-    ])
+    indices = rng.integers(0, len(arr), size=(n_resamples, len(arr)))
+    boot_means = arr[indices].mean(axis=1)
     lo = float(np.percentile(boot_means, 100 * alpha / 2))
     hi = float(np.percentile(boot_means, 100 * (1 - alpha / 2)))
     return mean, lo, hi
@@ -87,6 +85,7 @@ def main() -> None:
         default=["vanilla_direct", "stem_agent"],
     )
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--max-workers", type=int, default=1)
     args = parser.parse_args()
 
     setup_logging()
@@ -158,14 +157,15 @@ def main() -> None:
             all_results[name] = load_json(out_path)
             continue
 
-        logger.info("Evaluating %s on %d test tasks", name, len(test_tasks))
+        logger.info("Evaluating %s on %d test tasks (max_workers=%d)", name, len(test_tasks), args.max_workers)
         agent = BugFixAgent(config, llm)
+
+        batch_results = evaluate_split(agent, test_tasks, max_workers=args.max_workers)
+
         per_task: dict[str, dict] = {}
         n_passed = 0
-
-        for task in test_tasks:
-            tr = evaluate_task(agent, task)
-            per_task[task.task_id] = {
+        for tid, tr in batch_results.items():
+            per_task[tid] = {
                 "passed": tr.passed,
                 "duration_s": round(tr.duration_s, 3),
                 "cost_usd": round(tr.agent_result.cost_usd if tr.agent_result else 0.0, 6),
@@ -173,18 +173,16 @@ def main() -> None:
             if tr.passed:
                 n_passed += 1
 
-            data = {
-                "agent": name,
-                "model": args.model,
-                "timestamp": now_iso(),
-                "results": per_task,
-                "n_total": len(per_task),
-                "n_passed": n_passed,
-                "pass_at_1": n_passed / len(per_task) if per_task else 0.0,
-            }
-            save_json(out_path, data)
-
-        data["total_cost_usd"] = round(llm.get_total_cost(), 6)
+        data = {
+            "agent": name,
+            "model": args.model,
+            "timestamp": now_iso(),
+            "results": per_task,
+            "n_total": len(per_task),
+            "n_passed": n_passed,
+            "pass_at_1": n_passed / len(per_task) if per_task else 0.0,
+            "total_cost_usd": round(llm.get_total_cost(), 6),
+        }
         save_json(out_path, data)
         all_results[name] = data
 

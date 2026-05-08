@@ -66,6 +66,7 @@ def main() -> None:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--max-workers", type=int, default=1)
     parser.add_argument("--splits-path", default="benchmark/splits.json")
     parser.add_argument("--baselines-dir", default="results/baselines")
     parser.add_argument("--sensor-dir", default="results/sensor")
@@ -191,11 +192,12 @@ def main() -> None:
         min_improvement=args.min_improvement,
         rng=rng,
         dry_run=args.dry_run,
+        max_workers=args.max_workers,
     )
 
     logger.info(
-        "Starting differentiation: max_iterations=%d  vital_threshold=%.2f  dry_run=%s",
-        args.max_iterations, args.vital_threshold, args.dry_run,
+        "Starting differentiation: max_iterations=%d  vital_threshold=%.2f  dry_run=%s  max_workers=%d",
+        args.max_iterations, args.vital_threshold, args.dry_run, args.max_workers,
     )
     result = differentiator.run(initial)
 

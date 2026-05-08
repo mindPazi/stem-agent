@@ -1,0 +1,11 @@
+{
+  "variant": "no_sensor",
+  "final_score": 0.125,
+  "total_iterations": 10,
+  "converged": false,
+  "accepted_mutations": 0,
+  "safeguard_rejections": 10,
+  "total_cost_usd": 0.055859550000000015,
+  "model": "gpt-5.4-mini-2026-03-17",
+  "benchmark": "bugsinpy"
+}

@@ -1,0 +1,39 @@
+[
+  {
+    "iteration": 0,
+    "score": 0.125,
+    "config": {
+      "system_prompt": "You are an expert Python developer. Fix the bug in the provided code. Return only the corrected Python code, no explanation.",
+      "few_shot_examples": [],
+      "reasoning_instruction": "",
+      "output_format": "full_file",
+      "enabled_tools": [],
+      "tool_use_strategy": "never",
+      "approach": "direct",
+      "max_iterations": 1,
+      "temperature": 0.0,
+      "model": "gpt-5.4-mini-2026-03-17"
+    },
+    "timestamp": "2026-05-08T00:53:01.912852+00:00"
+  },
+  {
+    "iteration": 2,
+    "score": 0.25,
+    "config": {
+      "system_prompt": "You are an expert Python developer. Fix the bug in the provided code. Return only the corrected Python code, no explanation.",
+      "few_shot_examples": [],
+      "reasoning_instruction": "",
+      "output_format": "full_file",
+      "enabled_tools": [],
+      "tool_use_strategy": "never",
+      "approach": "cot",
+      "max_iterations": 1,
+      "temperature": 0.0,
+      "model": "gpt-5.4-mini-2026-03-17"
+    },
+    "mutations": [
+      "switch_approach"
+    ],
+    "timestamp": "2026-05-08T01:05:51.078621+00:00"
+  }
+]

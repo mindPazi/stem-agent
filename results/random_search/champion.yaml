@@ -1,0 +1,11 @@
+approach: direct
+enabled_tools: []
+few_shot_examples: []
+max_iterations: 1
+model: gpt-5.4-mini-2026-03-17
+output_format: full_file
+reasoning_instruction: ''
+system_prompt: You are a highly skilled Python developer. Repair the bug in the given
+  code. Output only the corrected Python code, with no explanation.
+temperature: 0.0
+tool_use_strategy: never

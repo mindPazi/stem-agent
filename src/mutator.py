@@ -35,6 +35,7 @@ MUTATION_OPERATORS: dict[str, str] = {
 
 _APPROACH_CYCLE = list(APPROACHES)
 _OUTPUT_FORMAT_CYCLE = list(OUTPUT_FORMATS)
+_OPERATOR_KEYS = tuple(MUTATION_OPERATORS.keys())
 
 # Predefined constraint sentences the mutator can inject/remove
 _CONSTRAINTS = [
@@ -116,6 +117,20 @@ class Mutator:
 
     def __init__(self, rng: random.Random | None = None) -> None:
         self.rng = rng or random.Random(42)
+        self._dispatch = {
+            "add_exemplar": self._op_add_exemplar,
+            "remove_exemplar": self._op_remove_exemplar,
+            "rephrase_system": self._op_rephrase_system,
+            "add_constraint": self._op_add_constraint,
+            "remove_constraint": self._op_remove_constraint,
+            "specialize_for_category": self._op_specialize_for_category,
+            "enable_tool": self._op_enable_tool,
+            "disable_tool": self._op_disable_tool,
+            "switch_approach": self._op_switch_approach,
+            "adjust_iterations": self._op_adjust_iterations,
+            "switch_output_format": self._op_switch_output_format,
+            "adjust_temperature": self._op_adjust_temperature,
+        }
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -156,21 +171,7 @@ class Mutator:
         context: MutationContext,
     ) -> AgentConfig:
         """Apply a single named operator and return a new config."""
-        dispatch = {
-            "add_exemplar": self._op_add_exemplar,
-            "remove_exemplar": self._op_remove_exemplar,
-            "rephrase_system": self._op_rephrase_system,
-            "add_constraint": self._op_add_constraint,
-            "remove_constraint": self._op_remove_constraint,
-            "specialize_for_category": self._op_specialize_for_category,
-            "enable_tool": self._op_enable_tool,
-            "disable_tool": self._op_disable_tool,
-            "switch_approach": self._op_switch_approach,
-            "adjust_iterations": self._op_adjust_iterations,
-            "switch_output_format": self._op_switch_output_format,
-            "adjust_temperature": self._op_adjust_temperature,
-        }
-        fn = dispatch.get(mutation_name)
+        fn = self._dispatch.get(mutation_name)
         if fn is None:
             raise ValueError(f"Unknown mutation operator: {mutation_name}")
         result = fn(config, context)
@@ -192,7 +193,7 @@ class Mutator:
     # ── Sampling helpers ──────────────────────────────────────────────────────
 
     def _applicable_operators(self, config: AgentConfig) -> list[str]:
-        ops = list(MUTATION_OPERATORS.keys())
+        ops = _OPERATOR_KEYS
         filtered = []
         for op in ops:
             if op == "remove_exemplar" and not config.few_shot_examples:

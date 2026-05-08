@@ -14,7 +14,7 @@ from .convergence import MutationRecord, check_convergence
 from .evaluator import evaluate_split
 from .mutator import MutationContext, Mutator
 from .safeguard import Safeguard
-from .utils import append_jsonl, load_json, now_iso, save_json
+from .utils import append_jsonl, load_json, load_jsonl, now_iso, save_json
 
 if TYPE_CHECKING:
     from .llm_client import LLMClient
@@ -65,6 +65,7 @@ class Differentiator:
         convergence_window: int = 5,
         rng: random.Random | None = None,
         dry_run: bool = False,
+        max_workers: int = 1,
     ) -> None:
         self.llm = llm_client
         self.mutator = mutator
@@ -80,32 +81,40 @@ class Differentiator:
         self.convergence_window = convergence_window
         self.rng = rng or random.Random(42)
         self.dry_run = dry_run
+        self.max_workers = max_workers
 
         log_dir.mkdir(parents=True, exist_ok=True)
 
     def run(self, initial_config: AgentConfig) -> DifferentiationResult:
         """Run the full differentiation loop. Returns the final champion."""
-        champion = initial_config.clone()
-
-        logger.info("Evaluating initial champion on dev+vital sets…")
-        self._checkpoint_label = "initial"
-        champion_results = self._evaluate(champion)
-        champion_score = self._dev_score(champion_results)
-
-        history: list[MutationRecord] = []
-        champion_history: list[dict] = [
-            {
-                "iteration": 0,
-                "score": champion_score,
-                "config": champion.to_dict(),
-                "timestamp": now_iso(),
-            }
-        ]
+        resumed = self._try_resume()
+        if resumed:
+            champion, champion_score, history, champion_history, start_iteration = resumed
+            logger.info(
+                "Resumed from iteration %d. Champion score: %.3f, %d history records",
+                start_iteration, champion_score, len(history),
+            )
+        else:
+            champion = initial_config.clone()
+            logger.info("Evaluating initial champion on dev+vital sets…")
+            self._checkpoint_label = "initial"
+            champion_results = self._evaluate(champion)
+            champion_score = self._dev_score(champion_results)
+            history = []
+            champion_history = [
+                {
+                    "iteration": 0,
+                    "score": champion_score,
+                    "config": champion.to_dict(),
+                    "timestamp": now_iso(),
+                }
+            ]
+            start_iteration = 0
 
         logger.info("Differentiation start. Champion score: %.3f", champion_score)
 
         converged = False
-        for iteration in range(self.max_iterations):
+        for iteration in range(start_iteration, self.max_iterations):
             context = MutationContext(
                 sensor_report=self.sensor_report,
                 iteration=iteration,
@@ -183,8 +192,8 @@ class Differentiator:
                         "timestamp": now_iso(),
                     }
                 )
-                # Persist champion immediately so crashes don't lose it
                 champion.save(self.log_dir / "champion.yaml")
+                save_json(self.log_dir / "champion_history.json", champion_history)
             else:
                 record = MutationRecord(
                     iteration=iteration,
@@ -235,6 +244,59 @@ class Differentiator:
 
     # ── Private helpers ───────────────────────────────────────────────────────
 
+    def _try_resume(self) -> tuple[AgentConfig, float, list[MutationRecord], list[dict], int] | None:
+        """Try to resume from a previous crashed/interrupted run."""
+        log_path = self.log_dir / "differentiation_log.jsonl"
+        champion_path = self.log_dir / "champion.yaml"
+        history_path = self.log_dir / "champion_history.json"
+
+        if not log_path.exists():
+            return None
+
+        raw_records = load_jsonl(log_path)
+        if not raw_records:
+            return None
+
+        if not champion_path.exists():
+            return None
+
+        history = [
+            MutationRecord(
+                iteration=r["iteration"],
+                mutation_names=r["mutation_names"],
+                accepted=r["accepted"],
+                score_before=r["score_before"],
+                score_after=r["score_after"],
+                delta=r.get("delta", 0.0),
+                reason=r.get("reason", ""),
+            )
+            for r in raw_records
+        ]
+
+        champion = AgentConfig.from_yaml(champion_path)
+
+        if history_path.exists():
+            try:
+                champion_history = load_json(history_path)
+            except Exception:
+                champion_history = []
+        else:
+            champion_history = []
+
+        champion_score = None
+        for rec in reversed(history):
+            if rec.accepted:
+                champion_score = rec.score_after
+                break
+        if champion_score is None and champion_history:
+            champion_score = champion_history[-1].get("score")
+        if champion_score is None:
+            champion_score = history[0].score_before
+
+        start_iteration = max(r.iteration for r in history) + 1
+
+        return champion, champion_score, history, champion_history, start_iteration
+
     def _evaluate(self, config: AgentConfig) -> dict[str, bool]:
         """Evaluate config on dev + vital tasks. Returns task_id -> passed."""
         all_ids = list(dict.fromkeys(self.dev_task_ids + self.vital_task_ids))
@@ -269,39 +331,44 @@ class Differentiator:
                 len(all_ids),
             )
 
-        if all(tid in completed for tid in all_ids):
-            logger.info("Checkpoint %s is complete; skipping evaluation", checkpoint_path.name)
-            return {tid: bool(completed[tid]["passed"]) for tid in all_ids}
-
-        agent = BugFixAgent(config, self.llm)
-        results: dict[str, bool] = {
-            tid: bool(completed[tid]["passed"])
-            for tid in all_ids
-            if tid in completed
-        }
-
+        results: dict[str, bool] = {}
+        remaining_tasks = []
         for tid in all_ids:
             if tid in completed:
-                continue
-            task = self.tasks.get(tid)
-            if task is None:
-                results[tid] = False
-                continue
+                results[tid] = bool(completed[tid]["passed"])
+            else:
+                task = self.tasks.get(tid)
+                if task is None:
+                    results[tid] = False
+                    completed[tid] = {"passed": False, "duration_s": 0.0, "cost_usd": 0.0}
+                else:
+                    remaining_tasks.append(task)
 
-            task_result = evaluate_split(agent, [task])[tid]
-            completed[tid] = {
-                "passed": task_result.passed,
-                "duration_s": round(task_result.duration_s, 3),
-                "cost_usd": round(
-                    task_result.agent_result.cost_usd if task_result.agent_result else 0.0,
-                    6,
-                ),
-            }
-            results[tid] = task_result.passed
+        if not remaining_tasks:
+            return results
+
+        agent = BugFixAgent(config, self.llm)
+
+        if remaining_tasks:
+            batch_results = evaluate_split(agent, remaining_tasks, max_workers=self.max_workers)
+            for tid, task_result in batch_results.items():
+                completed[tid] = {
+                    "passed": task_result.passed,
+                    "duration_s": round(task_result.duration_s, 3),
+                    "cost_usd": round(
+                        task_result.agent_result.cost_usd if task_result.agent_result else 0.0,
+                        6,
+                    ),
+                }
+                results[tid] = task_result.passed
+
+            config_dict = config.to_dict()
             save_json(checkpoint_path, {
                 "label": checkpoint_label,
-                "config_hash": self._config_hash(config),
-                "config": config.to_dict(),
+                "config_hash": hashlib.sha256(
+                    json.dumps(config_dict, sort_keys=True, ensure_ascii=True).encode("utf-8")
+                ).hexdigest()[:12],
+                "config": config_dict,
                 "task_ids": all_ids,
                 "results": completed,
                 "completed": len(completed),

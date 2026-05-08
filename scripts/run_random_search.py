@@ -54,6 +54,7 @@ def main() -> None:
     parser.add_argument("--min-improvement", type=float, default=0.02)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--max-workers", type=int, default=1)
     parser.add_argument("--splits-path", default="benchmark/splits.json")
     parser.add_argument("--baselines-dir", default="results/baselines")
     parser.add_argument("--output-dir", default="results/random_search")
@@ -135,6 +136,7 @@ def main() -> None:
         min_improvement=args.min_improvement,
         rng=rng,
         dry_run=args.dry_run,
+        max_workers=args.max_workers,
     )
 
     logger.info(

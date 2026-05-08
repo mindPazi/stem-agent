@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import logging
 from dataclasses import asdict, dataclass, field
@@ -107,10 +108,15 @@ class Sensor:
         )
 
         failure_analyses: list[dict] = []
-        for task in failed_tasks:
-            analysis = self._analyze_failure(task, agent_fixes.get(task.task_id, ""))
-            if analysis:
-                failure_analyses.append(analysis)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, len(failed_tasks) or 1)) as pool:
+            futures = {
+                pool.submit(self._analyze_failure, task, agent_fixes.get(task.task_id, "")): task
+                for task in failed_tasks
+            }
+            for future in concurrent.futures.as_completed(futures):
+                analysis = future.result()
+                if analysis:
+                    failure_analyses.append(analysis)
 
         # ── Aggregate patterns ────────────────────────────────────────────────
         failure_patterns = list({a["pattern"] for a in failure_analyses if a.get("pattern")})

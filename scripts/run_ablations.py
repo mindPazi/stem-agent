@@ -88,6 +88,7 @@ def _run_variant(
     sensor_report,
     vital_threshold: float,
     output_dir: Path,
+    max_workers: int = 1,
 ):
     llm = LLMClient(
         api_key=args.api_key or "dry-run-key",
@@ -116,9 +117,10 @@ def _run_variant(
         min_improvement=args.min_improvement,
         rng=rng,
         dry_run=args.dry_run,
+        max_workers=max_workers,
     )
 
-    logger.info("Starting %s: max_iterations=%d", name, args.max_iterations)
+    logger.info("Starting %s: max_iterations=%d  max_workers=%d", name, args.max_iterations, max_workers)
     result = differentiator.run(initial)
 
     accepted = sum(1 for r in result.history if r.accepted)
@@ -153,6 +155,7 @@ def main() -> None:
     parser.add_argument("--min-improvement", type=float, default=0.02)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--max-workers", type=int, default=1)
     parser.add_argument("--splits-path", default="benchmark/splits.json")
     parser.add_argument("--baselines-dir", default="results/baselines")
     parser.add_argument("--sensor-dir", default="results/sensor")
@@ -188,6 +191,7 @@ def main() -> None:
                 sensor_report=None,
                 vital_threshold=1.0,
                 output_dir=Path("results/no_sensor"),
+                max_workers=args.max_workers,
             )
         elif variant == "no_safeguard":
             _run_variant(
@@ -200,6 +204,7 @@ def main() -> None:
                 sensor_report=sensor_report,
                 vital_threshold=0.0,
                 output_dir=Path("results/no_safeguard"),
+                max_workers=args.max_workers,
             )
 
 
