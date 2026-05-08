@@ -17,8 +17,8 @@ All paths are configurable via environment variables:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `BUGSINPY_ROOT` | `C:/tmp/BugsInPy` | BugsInPy framework checkout |
-| `BUGSINPY_CACHE` | `C:/tmp/bugsinpy-project-cache` | Git mirror cache |
+| `BUGSINPY_ROOT` | `/opt/BugsInPy` | BugsInPy framework checkout |
+| `BUGSINPY_CACHE` | `/tmp/bugsinpy-project-cache` | Git mirror cache |
 | `BUGSINPY_WORKSPACE` | `workspace/bugsinpy-eval-workspace` | Temporary eval checkouts |
 
 On Windows, the runner executes BugsInPy tests through WSL.
