@@ -168,7 +168,8 @@ def main() -> None:
             }
             save_json(out_path, data)
 
-        data["total_cost_usd"] = round(llm.get_total_cost(), 6)
+        agent_cost = sum(r.get("cost_usd", 0.0) for r in baseline_results.values())
+        data["total_cost_usd"] = round(agent_cost, 6)
         save_json(out_path, data)
         all_results[baseline_name] = data
         logger.info(

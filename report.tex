@@ -56,7 +56,7 @@
 
 \tableofcontents
 
-%% ── PAGE 1 ──────────────────────────────────────────────────────────────────
+%% PAGE 1
 
 \section{Goal and Scope}
 
@@ -94,7 +94,7 @@ Test & 8 & Final held-out evaluation \\
 
 \textbf{Statistical power.} With $n{=}8$ binary outcomes, a one-sided exact
 binomial test at $\alpha{=}0.05$ against $p_0{=}0.25$ requires $\geq 5/8$
-successes to reject $H_0$---only a $\geq$37.5\,pp improvement is detectable.
+successes to reject $H_0$; only a $\geq$37.5\,pp improvement is detectable.
 All conclusions from this test split are directional evidence, not statistical claims.
 
 \section{Stem-Agent Mechanism}
@@ -110,8 +110,8 @@ temperature/iteration adjustment;
 \emph{structural}~(3): self-verification (mentally re-run the test on the fix),
 reflect-and-revise (second-pass self-critique), error-analysis protocol
 (structured root-cause classification).
-The space is deliberately bounded to serializable config changes---every point
-is reproducible and inspectable---answering a focused question: \emph{can
+The space is deliberately bounded to serializable config changes. Every point
+is reproducible and inspectable, answering a focused question: \emph{can
 sensor-guided search beat random search within this space?}
 
 The \textbf{differentiation loop} samples 1--2 mutations per iteration,
@@ -132,7 +132,7 @@ remove\_constraint, rephrase\_system, enable\_tool + add\_exemplar). The three
 structural operators were not sampled; with more iterations or seeds, coverage
 would increase.
 
-%% ── PAGE 2–3 ────────────────────────────────────────────────────────────────
+%% PAGE 2-3
 
 \section{Current Evidence}
 
@@ -161,14 +161,14 @@ Agent & Solved & pass@1 & 95\% CI \\
 
 All single-call agents (direct, CoT) cost $\sim$\$0.003.
 \texttt{hand\_tuned} uses ReAct with tool calls, requiring $\sim$100$\times$ more
-tokens for the same tasks with no accuracy gain---suggesting that multi-step
+tokens for the same tasks with no accuracy gain, suggesting that multi-step
 tool use is not cost-effective on this benchmark.
 
 McNemar $p{=}1.0$ for all pairs. The stem agent matches vanilla at 2/8 but
 solves a \emph{different} pair (\texttt{youtube-dl:10} instead of
 \texttt{:25}), suggesting that the CoT mutation changed the failure-mode
 profile rather than aggregate accuracy. On a larger benchmark this shift might
-translate to an improvement---or confirm that the two strategies trade bugs
+translate to an improvement, or confirm that the two strategies trade bugs
 rather than add them.
 
 \subsection*{Dev-set differentiation}
@@ -188,7 +188,7 @@ Variant & Dev score & Iters & Accepted & Converged \\
 \end{center}
 
 Two observations (both from a \textbf{single seed}; see caveat below):
-(1)~Random search achieved the highest dev score but dropped on test---overfitting
+(1)~Random search achieved the highest dev score but dropped on test, overfitting
 without the safeguard.
 (2)~Without sensor guidance, zero mutations were accepted; the search made no
 progress.
@@ -219,7 +219,7 @@ The difference between 0 and 1 accepted mutations could be sampling noise.
 Running 3--5 seeds would strengthen or weaken these claims; this was not
 feasible in the one-day budget.
 
-%% ── PAGE 3–4 ────────────────────────────────────────────────────────────────
+%% PAGE 3-4
 
 \section{What Surprised Me}
 
@@ -230,7 +230,7 @@ prompt variation. Lowering to 0.75 was a one-line fix but required understanding
 needs slack when evaluation is noisy.
 
 \textbf{Random search overfitting.} Random search hit 0.375 on dev (highest)
-but 1/8 on test---a concrete demonstration that unconstrained search exploits
+but 1/8 on test, a concrete demonstration that unconstrained search exploits
 small dev sets.
 
 \textbf{Convergence to CoT.} The loop ``rediscovered'' chain-of-thought as the
@@ -243,9 +243,11 @@ try first.
 
 \begin{enumerate}[nosep]
 \item \textbf{No measurable improvement.} stem\_agent $=$ vanilla at 2/8.
-  The search converges to CoT, which is the natural ``vanilla\_cot'' baseline.
-  Whether differentiation adds value beyond rediscovering CoT requires a
-  larger benchmark.
+  The search converges to CoT, which is the natural \texttt{vanilla\_cot}
+  baseline. The most informative comparison, \texttt{vanilla\_cot} on the
+  test split, was not run; the stem agent's final config differs from it
+  only in system-prompt wording, so this comparison would directly measure
+  whether differentiation adds value beyond rediscovering CoT.
 \item \textbf{Small test split.} 8 tasks make any difference undetectable
   below $\sim$37.5\,pp. The CIs confirm this.
 \item \textbf{Single seed.} All ablation claims rest on one run. The sensor's
@@ -262,8 +264,7 @@ try first.
 \item Expand to 60+ validated bugs across multiple BugsInPy projects to get a
   statistically meaningful test split.
 \item Run 3--5 seeds to measure variance and confirm/refute the sensor finding.
-\item Compare \texttt{vanilla\_cot} on the full benchmark to determine whether
-  differentiation adds value beyond rediscovering CoT.
+\item Run \texttt{vanilla\_cot} on the test split and compare directly.
 \item Evaluate without the fault-localization oracle to quantify its advantage.
 \end{itemize}
 
