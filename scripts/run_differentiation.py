@@ -30,8 +30,6 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from src.bugsinpy_loader import (
     DEFAULT_BUGSINPY_ROOT,
     DEFAULT_CACHE_ROOT,

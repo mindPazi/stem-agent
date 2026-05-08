@@ -20,8 +20,6 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from src.bugsinpy_loader import (
     DEFAULT_BUGSINPY_ROOT,
     DEFAULT_CACHE_ROOT,

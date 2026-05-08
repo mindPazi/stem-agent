@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import shlex
 import shutil
@@ -22,9 +23,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_BUGSINPY_ROOT = Path("C:/tmp/BugsInPy")
-DEFAULT_CACHE_ROOT = Path("C:/tmp/bugsinpy-project-cache")
-DEFAULT_WORKSPACE_ROOT = Path("workspace/bugsinpy-eval-workspace")
+DEFAULT_BUGSINPY_ROOT = Path(os.environ.get("BUGSINPY_ROOT", "C:/tmp/BugsInPy"))
+DEFAULT_CACHE_ROOT = Path(os.environ.get("BUGSINPY_CACHE", "C:/tmp/bugsinpy-project-cache"))
+DEFAULT_WORKSPACE_ROOT = Path(os.environ.get("BUGSINPY_WORKSPACE", "workspace/bugsinpy-eval-workspace"))
 
 _checkout_cache: dict[tuple[str, str], dict] = {}
 

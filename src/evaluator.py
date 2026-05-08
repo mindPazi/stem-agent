@@ -10,10 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .agent import AgentResult, BugFixAgent, Task
+from .bugsinpy_loader import DEFAULT_BUGSINPY_ROOT
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_BUGSINPY_ROOT = Path("C:/tmp/BugsInPy")
 
 
 @dataclass

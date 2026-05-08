@@ -31,11 +31,36 @@ MUTATION_OPERATORS: dict[str, str] = {
     "adjust_iterations": "Increase or decrease max_iterations by 1–2",
     "switch_output_format": "Cycle the output format (full_file->diff->function_only)",
     "adjust_temperature": "Nudge temperature by ±0.1",
+    "add_self_verification": "Add a self-check step instructing the agent to verify its fix",
+    "add_reflection": "Add a reflect-and-revise instruction for multi-pass reasoning",
+    "add_error_context": "Add structured error-analysis preamble to the prompt",
 }
 
 _APPROACH_CYCLE = list(APPROACHES)
 _OUTPUT_FORMAT_CYCLE = list(OUTPUT_FORMATS)
 _OPERATOR_KEYS = tuple(MUTATION_OPERATORS.keys())
+
+_SELF_VERIFICATION_INSTRUCTION = (
+    "\n\nSELF-VERIFICATION: After writing your fix, mentally re-run the failing "
+    "test with your patched code. Trace the execution path step by step. "
+    "If your fix does not make the test pass, revise before returning."
+)
+
+_REFLECTION_INSTRUCTION = (
+    "\n\nREFLECT-AND-REVISE: Before finalising, re-read the buggy code and your "
+    "proposed fix side-by-side. Ask yourself: (1) Does this change the minimal "
+    "set of lines? (2) Could it break any other test? (3) Is the root cause "
+    "actually at this location? Revise if any answer is uncertain."
+)
+
+_ERROR_CONTEXT_PREAMBLE = (
+    "\n\nERROR ANALYSIS PROTOCOL: "
+    "1. Read the full traceback and identify the exception type and line. "
+    "2. Classify the root cause (wrong variable, missing guard, off-by-one, "
+    "type mismatch, logic inversion, API misuse). "
+    "3. Propose the minimal fix for that specific root cause. "
+    "4. Do NOT fix unrelated code."
+)
 
 # Predefined constraint sentences the mutator can inject/remove
 _CONSTRAINTS = [
@@ -130,6 +155,9 @@ class Mutator:
             "adjust_iterations": self._op_adjust_iterations,
             "switch_output_format": self._op_switch_output_format,
             "adjust_temperature": self._op_adjust_temperature,
+            "add_self_verification": self._op_add_self_verification,
+            "add_reflection": self._op_add_reflection,
+            "add_error_context": self._op_add_error_context,
         }
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -203,6 +231,12 @@ class Mutator:
             if op == "enable_tool" and set(config.enabled_tools) >= set(AVAILABLE_TOOLS):
                 continue
             if op == "adjust_iterations" and config.approach not in ("react", "plan_execute"):
+                continue
+            if op == "add_self_verification" and "SELF-VERIFICATION" in config.system_prompt:
+                continue
+            if op == "add_reflection" and "REFLECT-AND-REVISE" in config.system_prompt:
+                continue
+            if op == "add_error_context" and "ERROR ANALYSIS PROTOCOL" in config.system_prompt:
                 continue
             filtered.append(op)
         return filtered
@@ -517,4 +551,31 @@ class Mutator:
             return config
         new_config = config.clone()
         new_config.temperature = new_val
+        return new_config
+
+    def _op_add_self_verification(
+        self, config: AgentConfig, context: MutationContext
+    ) -> AgentConfig:
+        if "SELF-VERIFICATION" in config.system_prompt:
+            return config
+        new_config = config.clone()
+        new_config.system_prompt = config.system_prompt.rstrip() + _SELF_VERIFICATION_INSTRUCTION
+        return new_config
+
+    def _op_add_reflection(
+        self, config: AgentConfig, context: MutationContext
+    ) -> AgentConfig:
+        if "REFLECT-AND-REVISE" in config.system_prompt:
+            return config
+        new_config = config.clone()
+        new_config.system_prompt = config.system_prompt.rstrip() + _REFLECTION_INSTRUCTION
+        return new_config
+
+    def _op_add_error_context(
+        self, config: AgentConfig, context: MutationContext
+    ) -> AgentConfig:
+        if "ERROR ANALYSIS PROTOCOL" in config.system_prompt:
+            return config
+        new_config = config.clone()
+        new_config.system_prompt = config.system_prompt.rstrip() + _ERROR_CONTEXT_PREAMBLE
         return new_config

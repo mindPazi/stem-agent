@@ -33,8 +33,8 @@ def _react_config() -> AgentConfig:
 
 # ── Registry ──────────────────────────────────────────────────────────────────
 
-def test_all_12_operators_registered():
-    assert len(MUTATION_OPERATORS) == 12
+def test_all_operators_registered():
+    assert len(MUTATION_OPERATORS) == 15
 
 
 def test_operator_names_are_strings():

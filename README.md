@@ -7,38 +7,56 @@ Splits are fixed in `benchmark/splits.json`.
 
 ## Setup
 
-```powershell
+```bash
 python -m pip install -e .
 ```
 
-For real BugsInPy evaluation, install BugsInPy under `C:\tmp\BugsInPy` and keep
-a project mirror cache at `C:\tmp\bugsinpy-project-cache`. The runner executes
-BugsInPy tests through WSL.
+### BugsInPy paths
+
+All paths are configurable via environment variables:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BUGSINPY_ROOT` | `C:/tmp/BugsInPy` | BugsInPy framework checkout |
+| `BUGSINPY_CACHE` | `C:/tmp/bugsinpy-project-cache` | Git mirror cache |
+| `BUGSINPY_WORKSPACE` | `workspace/bugsinpy-eval-workspace` | Temporary eval checkouts |
+
+On Windows, the runner executes BugsInPy tests through WSL.
+
+### Docker (Linux)
+
+```bash
+docker build -t stem-agent .
+docker run -e OPENAI_API_KEY=$OPENAI_API_KEY stem-agent python scripts/run_final_eval.py
+```
 
 Set `OPENAI_API_KEY` in `.env` or pass `--api-key`.
 
 ## Fast Local Checks
 
-```powershell
+```bash
 python -m pytest -q
-python scripts\run_sensor.py --heuristic
+python scripts/run_sensor.py --heuristic
 ```
 
 ## Main Pipeline
 
-```powershell
-python scripts\run_baselines.py --baselines vanilla_direct
-python scripts\run_sensor.py --heuristic
-python scripts\run_differentiation.py --max-iterations 5
-python scripts\run_final_eval.py --agents vanilla_direct stem_agent
+```bash
+python scripts/run_baselines.py --baselines vanilla_direct
+python scripts/run_sensor.py --heuristic
+python scripts/run_differentiation.py --max-iterations 10 --vital-threshold 0.75
+python scripts/run_final_eval.py --agents vanilla_direct vanilla_cot stem_agent \
+    random_search no_sensor no_safeguard hand_tuned
 ```
 
 Outputs are written under `results/`. The final comparison is
 `results/final_eval/test_results.json`.
 
-## Current Frozen Evidence
+## Verifying Results Without Re-running
 
-The stored phase-0 baseline result for `gpt-5.4-mini-2026-03-17` solves 7/25
-BugsInPy calibration bugs and 1/8 bugs on the frozen test split. The report does
-not claim a stem-agent improvement until `run_final_eval.py` has produced the
-after result.
+```bash
+cat results/final_eval/test_results.json
+cat results/differentiation/champion_history.json
+python -m pytest -q
+python scripts/run_differentiation.py --dry-run --max-iterations 3
+```

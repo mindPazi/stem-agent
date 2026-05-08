@@ -27,8 +27,6 @@ from pathlib import Path
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from src.bugsinpy_loader import (
     DEFAULT_BUGSINPY_ROOT,
     DEFAULT_CACHE_ROOT,
@@ -82,7 +80,7 @@ def main() -> None:
     parser.add_argument("--bugsinpy-root", default=str(DEFAULT_BUGSINPY_ROOT))
     parser.add_argument(
         "--agents", nargs="+",
-        default=["vanilla_direct", "stem_agent"],
+        default=["vanilla_direct", "vanilla_cot", "stem_agent"],
     )
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--max-workers", type=int, default=1)
