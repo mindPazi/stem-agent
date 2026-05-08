@@ -102,14 +102,17 @@ def _recheckout_bugsinpy_task(task: Task) -> None:
 def evaluate_task(agent: BugFixAgent, task: Task) -> TaskResult:
     logger.info("Evaluating %s (kind=%s)", task.task_id, getattr(task, "kind", "synthetic"))
     if getattr(task, "kind", "synthetic") == "bugsinpy":
+        logger.info("  [1/3] recheckout %s", task.task_id)
         _recheckout_bugsinpy_task(task)
         from .bugsinpy_runner import compile_and_test
 
+        logger.info("  [2/3] compile+test (failing baseline) %s", task.task_id)
         repo_dir = Path(getattr(task, "repo_dir", task.task_dir))
         _, failing_output = compile_and_test(DEFAULT_BUGSINPY_ROOT, repo_dir)
         if hasattr(task, "test_output"):
             task.test_output = failing_output
 
+    logger.info("  [3/3] agent.fix %s", task.task_id)
     agent_result = agent.fix(task)
 
     if getattr(task, "kind", "synthetic") == "bugsinpy":

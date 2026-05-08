@@ -105,6 +105,7 @@ def main() -> None:
                 DEFAULT_WORKSPACE_ROOT, DEFAULT_CACHE_ROOT,
             )
             test_tasks.append(task)
+            logger.info("  Loaded %s (%d/%d)", tid, len(test_tasks), len(test_ids))
         except Exception as exc:
             logger.warning("Failed to load %s: %s", tid, exc)
 

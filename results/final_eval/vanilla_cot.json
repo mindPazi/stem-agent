@@ -1,0 +1,51 @@
+{
+  "agent": "vanilla_cot",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "timestamp": "2026-05-08T13:51:19.923971+00:00",
+  "results": {
+    "youtube-dl:9": {
+      "passed": false,
+      "duration_s": 35.426,
+      "cost_usd": 0.000938
+    },
+    "youtube-dl:10": {
+      "passed": false,
+      "duration_s": 60.677,
+      "cost_usd": 0.000363
+    },
+    "youtube-dl:13": {
+      "passed": true,
+      "duration_s": 37.784,
+      "cost_usd": 0.000306
+    },
+    "youtube-dl:18": {
+      "passed": false,
+      "duration_s": 37.251,
+      "cost_usd": 0.000258
+    },
+    "youtube-dl:19": {
+      "passed": false,
+      "duration_s": 37.819,
+      "cost_usd": 0.000374
+    },
+    "youtube-dl:24": {
+      "passed": false,
+      "duration_s": 37.229,
+      "cost_usd": 0.0006
+    },
+    "youtube-dl:25": {
+      "passed": false,
+      "duration_s": 36.639,
+      "cost_usd": 0.000415
+    },
+    "youtube-dl:26": {
+      "passed": false,
+      "duration_s": 27.183,
+      "cost_usd": 0.000358
+    }
+  },
+  "n_total": 8,
+  "n_passed": 1,
+  "pass_at_1": 0.125,
+  "total_cost_usd": 0.003612
+}
