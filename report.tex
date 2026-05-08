@@ -244,10 +244,11 @@ try first.
 \begin{enumerate}[nosep]
 \item \textbf{No measurable improvement.} stem\_agent $=$ vanilla at 2/8.
   The search converges to CoT, which is the natural \texttt{vanilla\_cot}
-  baseline. The most informative comparison, \texttt{vanilla\_cot} on the
-  test split, was not run; the stem agent's final config differs from it
-  only in system-prompt wording, so this comparison would directly measure
-  whether differentiation adds value beyond rediscovering CoT.
+  baseline. The most informative comparison---\texttt{vanilla\_cot} on the
+  test split---was not run. The champion's \texttt{reasoning\_instruction}
+  is effectively identical to vanilla\_cot's (same default fallback);
+  only the system prompt differs (``expert \ldots\ Return only the corrected
+  code''). Whether that prompt wording matters requires this comparison.
 \item \textbf{Small test split.} 8 tasks make any difference undetectable
   below $\sim$37.5\,pp. The CIs confirm this.
 \item \textbf{Single seed.} All ablation claims rest on one run. The sensor's
