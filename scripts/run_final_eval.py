@@ -162,12 +162,15 @@ def main() -> None:
 
         per_task: dict[str, dict] = {}
         n_passed = 0
+        agent_cost = 0.0
         for tid, tr in batch_results.items():
+            task_cost = round(tr.agent_result.cost_usd if tr.agent_result else 0.0, 6)
             per_task[tid] = {
                 "passed": tr.passed,
                 "duration_s": round(tr.duration_s, 3),
-                "cost_usd": round(tr.agent_result.cost_usd if tr.agent_result else 0.0, 6),
+                "cost_usd": task_cost,
             }
+            agent_cost += task_cost
             if tr.passed:
                 n_passed += 1
 
@@ -179,7 +182,7 @@ def main() -> None:
             "n_total": len(per_task),
             "n_passed": n_passed,
             "pass_at_1": n_passed / len(per_task) if per_task else 0.0,
-            "total_cost_usd": round(llm.get_total_cost(), 6),
+            "total_cost_usd": round(agent_cost, 6),
         }
         save_json(out_path, data)
         all_results[name] = data

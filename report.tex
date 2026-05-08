@@ -119,9 +119,18 @@ evaluates the challenger on dev + vital signs, and promotes only if dev~pass@1
 improves by $>$\texttt{min\_improvement}. The \textbf{safeguard} rejects
 challengers that regress vital signs below a threshold~(0.75). The
 \textbf{sensor} runs once on calibration results, extracting failure patterns
-and suggesting mutation directions (\texttt{reference\_fixes\_used=false}).
+and suggesting mutation directions. The sensor uses reference fixes to analyze
+failure patterns in calibration tasks but never exposes them to the inner agent
+(\texttt{reference\_fixes\_used=true} in \texttt{SensorReport}, scoped to
+calibration only).
 Anti-leakage: a unit test verifies that test-suite source code never appears in
 the agent prompt.
+
+\textit{Note:} In the 9-iteration run only 7 of 15 operators were sampled
+(specialize\_for\_category, add\_constraint, switch\_approach, adjust\_temperature,
+remove\_constraint, rephrase\_system, enable\_tool + add\_exemplar). The three
+structural operators were not sampled; with more iterations or seeds, coverage
+would increase.
 
 %% ── PAGE 2–3 ────────────────────────────────────────────────────────────────
 
@@ -136,23 +145,31 @@ direct baseline solves 2/8.
 \subsection*{Test-split results}
 
 \begin{center}\small
-\begin{tabular}{lcccr}
+\begin{tabular}{lccc}
 \toprule
-Agent & Solved & pass@1 & 95\% CI & Cost \\
+Agent & Solved & pass@1 & 95\% CI \\
 \midrule
-\texttt{vanilla\_direct} & 2/8 & 25.0\% & [0.0, 62.5] & \$0.003 \\
-\texttt{stem\_agent} & 2/8 & 25.0\% & [0.0, 62.5] & \$0.302 \\
-\texttt{hand\_tuned} & 1/8 & 12.5\% & [0.0, 37.5] & \$0.298 \\
-\texttt{no\_safeguard} & 1/8 & 12.5\% & [0.0, 37.5] & \$0.311 \\
-\texttt{no\_sensor} & 1/8 & 12.5\% & [0.0, 37.5] & \$0.308 \\
-\texttt{random\_search} & 1/8 & 12.5\% & [0.0, 37.5] & \$0.305 \\
+\texttt{vanilla\_direct} & 2/8 & 25.0\% & [0.0, 62.5] \\
+\texttt{stem\_agent} & 2/8 & 25.0\% & [0.0, 62.5] \\
+\texttt{hand\_tuned} & 1/8 & 12.5\% & [0.0, 37.5] \\
+\texttt{no\_safeguard} & 1/8 & 12.5\% & [0.0, 37.5] \\
+\texttt{no\_sensor} & 1/8 & 12.5\% & [0.0, 37.5] \\
+\texttt{random\_search} & 1/8 & 12.5\% & [0.0, 37.5] \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-McNemar $p{=}1.0$ for all pairs. The stem agent solves a \emph{different} pair
-than vanilla (\texttt{youtube-dl:10} instead of \texttt{:25}). No performance
-difference can be established at this sample size.
+All single-call agents (direct, CoT) cost $\sim$\$0.003.
+\texttt{hand\_tuned} uses ReAct with tool calls, requiring $\sim$100$\times$ more
+tokens for the same tasks with no accuracy gain---suggesting that multi-step
+tool use is not cost-effective on this benchmark.
+
+McNemar $p{=}1.0$ for all pairs. The stem agent matches vanilla at 2/8 but
+solves a \emph{different} pair (\texttt{youtube-dl:10} instead of
+\texttt{:25}), suggesting that the CoT mutation changed the failure-mode
+profile rather than aggregate accuracy. On a larger benchmark this shift might
+translate to an improvement---or confirm that the two strategies trade bugs
+rather than add them.
 
 \subsection*{Dev-set differentiation}
 

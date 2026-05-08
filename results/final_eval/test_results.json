@@ -7,7 +7,7 @@
       "n_passed": 2,
       "n_total": 8,
       "mcnemar_p_vs_vanilla": null,
-      "total_cost_usd": 0.003477
+      "total_cost_usd": 0.003478
     },
     "hand_tuned": {
       "pass_at_1": 0.125,
@@ -16,7 +16,7 @@
       "n_passed": 1,
       "n_total": 8,
       "mcnemar_p_vs_vanilla": 1.0,
-      "total_cost_usd": 0.298444
+      "total_cost_usd": 0.294968
     },
     "stem_agent": {
       "pass_at_1": 0.25,
@@ -25,7 +25,7 @@
       "n_passed": 2,
       "n_total": 8,
       "mcnemar_p_vs_vanilla": 1.0,
-      "total_cost_usd": 0.301656
+      "total_cost_usd": 0.003211
     },
     "random_search": {
       "pass_at_1": 0.125,
@@ -34,7 +34,7 @@
       "n_passed": 1,
       "n_total": 8,
       "mcnemar_p_vs_vanilla": 1.0,
-      "total_cost_usd": 0.304723
+      "total_cost_usd": 0.003066
     },
     "no_sensor": {
       "pass_at_1": 0.125,
@@ -43,7 +43,7 @@
       "n_passed": 1,
       "n_total": 8,
       "mcnemar_p_vs_vanilla": 1.0,
-      "total_cost_usd": 0.307781
+      "total_cost_usd": 0.003058
     },
     "no_safeguard": {
       "pass_at_1": 0.125,
@@ -52,7 +52,7 @@
       "n_passed": 1,
       "n_total": 8,
       "mcnemar_p_vs_vanilla": 1.0,
-      "total_cost_usd": 0.310993
+      "total_cost_usd": 0.003213
     }
   },
   "test_ids": [

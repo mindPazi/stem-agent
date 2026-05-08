@@ -23,13 +23,6 @@ All paths are configurable via environment variables:
 
 On Windows, the runner executes BugsInPy tests through WSL.
 
-### Docker (Linux)
-
-```bash
-docker build -t stem-agent .
-docker run -e OPENAI_API_KEY=$OPENAI_API_KEY stem-agent python scripts/run_final_eval.py
-```
-
 Set `OPENAI_API_KEY` in `.env` or pass `--api-key`.
 
 ## Fast Local Checks
